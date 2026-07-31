@@ -12,6 +12,7 @@ load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))  
 _client = OpenAI(
     base_url="https://api.groq.com/openai/v1",
     api_key=os.environ["GROQ_API_KEY"],
+    max_retries=6,  # retry on 429 rate-limit errors with exponential backoff
 )
 
 _SYSTEM_PROMPT = """You extract structured patient data from clinical notes.

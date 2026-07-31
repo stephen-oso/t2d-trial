@@ -8,6 +8,7 @@ Tool results are parsed directly from result["messages"] — no extra LLM call n
 
 import json
 import os
+import time
 from dotenv import load_dotenv
 from langchain_core.tools import tool as lc_tool
 from langchain_groq import ChatGroq
@@ -30,12 +31,14 @@ load_dotenv()
 
 @lc_tool
 def search_trials(query: str) -> str:
-    """Search the clinical trial database for T2D trials relevant to a patient.
-    Returns a JSON list of trials with trial_id, title, and eligibility criteria.
+    """Search T2D clinical trials for a patient.
+    Returns JSON list of {trial_id, title}. Use trial_id with check_eligibility.
     Args:
-        query: Free-text description of the patient (e.g. "T2D age 52 HbA1c 8.2 no insulin")
+        query: Short patient description, e.g. "T2D age 52 HbA1c 8.2 on metformin"
     """
-    return _search_trials_impl.invoke({"query": query})
+    raw = _search_trials_impl.invoke({"query": query})
+    trials = json.loads(raw)
+    return json.dumps([{"trial_id": t["trial_id"], "title": t["title"]} for t in trials])
 
 
 @lc_tool
@@ -64,7 +67,7 @@ def score_match(verdicts_json: str) -> str:
 
 # ── LLM + agent ──────────────────────────────────────────────────────────────
 _llm = ChatGroq(
-    model="llama-3.1-8b-instant",
+    model="gemma2-9b-it",
     api_key=os.environ["GROQ_API_KEY"],
     temperature=0,
     max_retries=6,  # retry on 429 rate-limit errors with exponential backoff
@@ -206,6 +209,9 @@ def run_match(note: str) -> dict:
                                       criteria, missing_info
         }
     """
+    # Free-tier Groq TPM limit is 6000 tokens/min. Each agent run consumes
+    # ~2000 tokens across ReAct steps. Sleep 30s to cap at 2 runs/min.
+    time.sleep(30)
     profile = extract_patient_profile(note)
     patient_dict = profile.model_dump()
     patient_json_str = json.dumps(patient_dict)

@@ -20,7 +20,7 @@ def search_trials(query: str) -> str:
     """Search the clinical trial database for trials relevant to a patient query.
     Returns a JSON list of trials with their eligibility criteria."""
     collection = get_chroma_collection()
-    results = collection.query(query_texts=[query], n_results=2)
+    results = collection.query(query_texts=[query], n_results=10)
 
     trials = []
     for i, meta in enumerate(results["metadatas"][0]):
@@ -70,7 +70,7 @@ def check_eligibility(input_json: str) -> str:
         [f"EXCLUDE: {c}" for c in exclusion]
     )
 
-    prompt = f"""You are checking if a patient meets clinical trial eligibility criteria.
+    prompt = f"""You are checking if a patient meets clinical trial eligibility criteria. Be strict and precise.
 
 Patient data:
 {json.dumps(patient, indent=2)}
@@ -80,10 +80,16 @@ Criteria to check (each starts with INCLUDE or EXCLUDE):
 
 For each criterion, return a JSON array. Each item must have:
 - "criterion": the criterion text (without INCLUDE/EXCLUDE prefix)
-- "status": "PASS", "FAIL", or "UNKNOWN" (UNKNOWN if the patient data doesn't have enough info)
+- "status": "PASS", "FAIL", or "UNKNOWN" (UNKNOWN only if the patient data truly lacks the required info)
 - "patient_value": the relevant patient value as a string, or null if unknown
 
-For EXCLUDE criteria: PASS means the patient does NOT have the exclusion (good). FAIL means they DO (bad).
+Rules:
+- For INCLUDE criteria: PASS if the patient clearly meets it, FAIL if they clearly do not, UNKNOWN if data is missing.
+- For EXCLUDE criteria: PASS means the patient does NOT have the exclusion (safe to include). FAIL means they DO have it (excluded).
+- Apply numeric comparisons strictly: if a criterion says ">7.5%" and the patient has exactly 7.5%, that is FAIL (not PASS).
+- If a criterion says ">=45" and the patient has exactly 45, that is PASS.
+- If the patient data has null or missing for a required field, mark UNKNOWN — do not assume.
+- If the patient has a disqualifying condition that is explicitly listed as an exclusion, mark FAIL.
 Return ONLY the JSON array, no explanation."""
 
     response = _client.chat.completions.create(
