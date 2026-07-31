@@ -1,31 +1,73 @@
 """LangGraph ReAct agent for clinical trial matching.
 
 The agent is wired with three tools (search_trials, check_eligibility, score_match)
-and a MemorySaver checkpointer as specified.  run_match() orchestrates those same
-tools directly to stay within the Groq free-tier TPM limit (6 000 tokens/min) —
-the ReAct loop accumulates large tool-call histories that blow the limit when two
-tests run back-to-back in the same minute.
+and a MemorySaver checkpointer as specified.  run_match() invokes the agent via
+_agent.invoke(), letting the ReAct loop drive all tool selection and execution.
+Tool results are parsed directly from result["messages"] — no extra LLM call needed.
 """
 
 import json
 import os
-import time
 from dotenv import load_dotenv
+from langchain_core.tools import tool as lc_tool
 from langchain_groq import ChatGroq
 from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.memory import MemorySaver
-from openai import OpenAI
 
 from extraction.extract import extract_patient_profile
-from matching.tools import search_trials, check_eligibility, score_match
+from matching.tools import (
+    search_trials as _search_trials_impl,
+    check_eligibility as _check_eligibility_impl,
+    score_match as _score_match_impl,
+)
 
 load_dotenv()
 
-# ── LLM + agent (satisfies the spec requirement) ────────────────────────────
+# ── Agent-facing tool wrappers with LLM-friendly signatures ──────────────────
+# The underlying tools use opaque JSON-string parameters that are hard for small
+# LLMs to call correctly.  These thin wrappers expose natural parameters while
+# delegating to the original implementations (which the tools-tests still cover).
+
+@lc_tool
+def search_trials(query: str) -> str:
+    """Search the clinical trial database for T2D trials relevant to a patient.
+    Returns a JSON list of trials with trial_id, title, and eligibility criteria.
+    Args:
+        query: Free-text description of the patient (e.g. "T2D age 52 HbA1c 8.2 no insulin")
+    """
+    return _search_trials_impl.invoke({"query": query})
+
+
+@lc_tool
+def check_eligibility(patient_json: str, trial_id: str) -> str:
+    """Check whether a patient meets eligibility criteria for one specific trial.
+    Returns a JSON list of {criterion, status, patient_value} objects.
+    Status is PASS, FAIL, or UNKNOWN.
+    Args:
+        patient_json: The patient profile serialised as a JSON string.
+        trial_id: The trial ID to check (e.g. "NCT04932928").
+    """
+    input_payload = json.dumps({"patient_json": patient_json, "trial_id": trial_id})
+    return _check_eligibility_impl.invoke({"input_json": input_payload})
+
+
+@lc_tool
+def score_match(verdicts_json: str) -> str:
+    """Compute a numeric match score from eligibility check verdicts.
+    Returns JSON: {score: float 0-1, missing: list[str]}.
+    Score is 0.0 if any FAIL is present.
+    Args:
+        verdicts_json: The JSON string returned by check_eligibility.
+    """
+    return _score_match_impl.invoke({"verdicts_json": verdicts_json})
+
+
+# ── LLM + agent ──────────────────────────────────────────────────────────────
 _llm = ChatGroq(
     model="llama-3.1-8b-instant",
     api_key=os.environ["GROQ_API_KEY"],
     temperature=0,
+    max_retries=6,  # retry on 429 rate-limit errors with exponential backoff
 )
 
 _memory = MemorySaver()
@@ -35,50 +77,127 @@ _agent = create_react_agent(
     checkpointer=_memory,
 )
 
-# ── Groq client for the JSON-formatting step ─────────────────────────────────
-_client = OpenAI(
-    base_url="https://api.groq.com/openai/v1",
-    api_key=os.environ["GROQ_API_KEY"],
+_SYSTEM = (
+    "You are a clinical trial matching assistant. "
+    "Given a patient profile JSON, find which T2D trials they may qualify for.\n\n"
+    "Steps:\n"
+    "1. Call search_trials with a short query describing the patient.\n"
+    "2. For EACH trial returned call check_eligibility, passing "
+    "patient_json (the full patient JSON as a string) and trial_id.\n"
+    "3. For EACH eligibility result call score_match with the verdicts JSON string.\n"
+    "4. After scoring all trials, respond with a brief summary."
 )
 
 
-def _format_matches(raw_results: list[dict], patient_dict: dict) -> list[dict]:
-    """Ask the LLM to produce a clean MatchResponse JSON from the raw results."""
-    summary_lines = []
-    for r in raw_results:
-        summary_lines.append(
-            f"Trial {r['trial_id']} ({r['title']}): score={r['score']}, "
-            f"missing={r['missing']}, verdicts={json.dumps(r['verdicts'])}"
-        )
-    summary = "\n".join(summary_lines)
+def _compute_score(verdicts: list[dict]) -> tuple[float, list[str]]:
+    """Compute a match score from a list of verdict dicts.
 
-    response = _client.chat.completions.create(
-        model="llama-3.1-8b-instant",
-        messages=[
+    Mirrors the logic in matching/tools.py:score_match without an extra tool call.
+    Returns (score, missing_criteria_list).
+    """
+    passes = sum(1 for v in verdicts if v.get("status") == "PASS")
+    fails = sum(1 for v in verdicts if v.get("status") == "FAIL")
+    unknowns = sum(1 for v in verdicts if v.get("status") == "UNKNOWN")
+    missing = [v.get("criterion", "") for v in verdicts if v.get("status") == "UNKNOWN"]
+
+    if fails > 0:
+        return 0.0, missing
+
+    total = passes + fails
+    if total == 0:
+        return 0.0, missing
+
+    base_score = passes / total
+    unknown_penalty = min(unknowns * 0.05, 0.2)
+    score = max(0.0, base_score - unknown_penalty)
+    return round(score, 3), missing
+
+
+def _parse_messages(messages: list) -> list[dict]:
+    """Parse agent messages to extract match data from ToolMessage results.
+
+    Extracts verdicts from check_eligibility ToolMessage outputs (keyed by
+    trial_id from the AIMessage tool_call args), then computes scores locally
+    using the same deterministic formula as score_match — no additional LLM
+    call and no fragile correlation across tool boundaries.
+
+    Returns a list of match dicts sorted by score descending.
+    """
+    # Build maps from tool_call_id
+    call_info: dict[str, tuple[str, dict]] = {}  # id -> (name, args)
+    call_output: dict[str, str] = {}             # id -> raw content string
+
+    for msg in messages:
+        msg_type = type(msg).__name__
+        if msg_type == "AIMessage" and hasattr(msg, "tool_calls") and msg.tool_calls:
+            for tc in msg.tool_calls:
+                call_info[tc["id"]] = (tc["name"], tc.get("args", {}))
+        elif msg_type == "ToolMessage":
+            call_output[msg.tool_call_id] = msg.content
+
+    # --- search_trials: build trial_id -> title map ---
+    trial_titles: dict[str, str] = {}
+    for call_id, (name, args) in call_info.items():
+        if name == "search_trials" and call_id in call_output:
+            try:
+                trials = json.loads(call_output[call_id])
+                for t in trials:
+                    if isinstance(t, dict) and "trial_id" in t:
+                        trial_titles[t["trial_id"]] = t.get("title", t["trial_id"])
+            except (json.JSONDecodeError, KeyError):
+                pass
+
+    # --- check_eligibility: trial_id -> verdicts ---
+    # The agent wrapper exposes separate (patient_json, trial_id) params so
+    # we can reliably read trial_id from the tool call args.
+    trial_verdicts: dict[str, list] = {}
+    for call_id, (name, args) in call_info.items():
+        if name == "check_eligibility" and call_id in call_output:
+            tid = args.get("trial_id")
+            if tid:
+                try:
+                    verdicts = json.loads(call_output[call_id])
+                    if isinstance(verdicts, list):
+                        trial_verdicts[tid] = verdicts
+                except json.JSONDecodeError:
+                    pass
+
+    # --- Compute scores locally from the raw verdicts ---
+    # We do NOT use the agent's score_match tool call outputs because the LLM
+    # may reformat the verdicts before passing them to score_match, producing
+    # incorrect scores.  The deterministic computation here is reliable.
+    matches: list[dict] = []
+    for trial_id, verdicts in trial_verdicts.items():
+        score, missing_info = _compute_score(verdicts)
+        criteria = [
             {
-                "role": "user",
-                "content": (
-                    "Convert this trial matching data into JSON.\n\n"
-                    f"Data:\n{summary}\n\n"
-                    "Return ONLY this JSON structure:\n"
-                    '{"matches": [{"trial_id": "NCT...", "trial_name": "...", '
-                    '"score": 0.0, '
-                    '"criteria": [{"criterion": "...", "status": "PASS|FAIL|UNKNOWN", '
-                    '"patient_value": "..."}], '
-                    '"missing_info": ["list of unknown criteria"]}]}\n\n'
-                    "Only include trials with score > 0.0. Sort by score descending."
-                ),
+                "criterion": v.get("criterion", ""),
+                "status": v.get("status", "UNKNOWN"),
+                "patient_value": v.get("patient_value", None),
             }
-        ],
-        response_format={"type": "json_object"},
-        temperature=0,
-    )
-    parsed = json.loads(response.choices[0].message.content)
-    return parsed.get("matches", [])
+            for v in verdicts
+            if isinstance(v, dict)
+        ]
+        matches.append(
+            {
+                "trial_id": trial_id,
+                "trial_name": trial_titles.get(trial_id, trial_id),
+                "score": float(score),
+                "criteria": criteria,
+                "missing_info": missing_info,
+            }
+        )
+
+    matches.sort(key=lambda m: m["score"], reverse=True)
+    return matches
 
 
 def run_match(note: str) -> dict:
-    """Run the full matching pipeline for a patient note.
+    """Run the full matching pipeline for a patient note via the ReAct agent.
+
+    The LangGraph ReAct agent (_agent) drives all tool selection and execution
+    via _agent.invoke().  Tool results are parsed from result["messages"] by
+    _parse_messages() — no extra LLM call is made.
 
     Returns:
         {
@@ -87,53 +206,26 @@ def run_match(note: str) -> dict:
                                       criteria, missing_info
         }
     """
-    # Step 1: Extract patient profile
     profile = extract_patient_profile(note)
     patient_dict = profile.model_dump()
     patient_json_str = json.dumps(patient_dict)
 
-    # Step 2: Search for relevant trials (returns JSON string)
-    query = (
-        f"Type 2 diabetes age {patient_dict.get('age')} "
-        f"HbA1c {patient_dict.get('hba1c')} "
-        f"{'insulin' if patient_dict.get('on_insulin') else 'no insulin'}"
+    prompt = (
+        f"Patient profile JSON:\n{patient_json_str}\n\n"
+        "Find matching T2D clinical trials, check eligibility for each, and score each one."
     )
-    trials_json = search_trials.invoke({"query": query})
-    trials = json.loads(trials_json)
 
-    # Step 3 & 4: Check eligibility and score each trial
-    # Sleep between calls to avoid Groq free-tier TPM limit (6 000 tokens/min)
-    _INTER_CALL_SLEEP = 10  # seconds — keeps ~5 trials within 60s window
+    config = {
+        "configurable": {"thread_id": f"match-{hash(note)}"},
+        "recursion_limit": 15,
+    }
+    result = _agent.invoke(
+        {"messages": [{"role": "system", "content": _SYSTEM},
+                      {"role": "user", "content": prompt}]},
+        config=config,
+    )
 
-    raw_results = []
-    for i, trial in enumerate(trials):
-        trial_id = trial["trial_id"]
-        title = trial["title"]
-
-        if i > 0:
-            time.sleep(_INTER_CALL_SLEEP)
-
-        # check_eligibility expects {"patient_json": "<str>", "trial_id": "<str>"}
-        check_input = json.dumps({"patient_json": patient_json_str, "trial_id": trial_id})
-        verdicts_json = check_eligibility.invoke({"input_json": check_input})
-        verdicts = json.loads(verdicts_json)
-
-        # score_match expects the verdicts JSON array as a string
-        score_result_json = score_match.invoke({"verdicts_json": verdicts_json})
-        score_result = json.loads(score_result_json)
-
-        raw_results.append({
-            "trial_id": trial_id,
-            "title": title,
-            "score": score_result["score"],
-            "missing": score_result["missing"],
-            "verdicts": verdicts,
-        })
-
-    # Step 5: Format into clean MatchResponse structure
-    # Small pause to avoid hitting the Groq TPM limit when tests run back-to-back
-    time.sleep(2)
-    matches = _format_matches(raw_results, patient_dict)
+    matches = _parse_messages(result["messages"])
 
     return {
         "patient": patient_dict,

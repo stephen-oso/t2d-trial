@@ -20,7 +20,7 @@ def search_trials(query: str) -> str:
     """Search the clinical trial database for trials relevant to a patient query.
     Returns a JSON list of trials with their eligibility criteria."""
     collection = get_chroma_collection()
-    results = collection.query(query_texts=[query], n_results=5)
+    results = collection.query(query_texts=[query], n_results=2)
 
     trials = []
     for i, meta in enumerate(results["metadatas"][0]):
@@ -37,8 +37,8 @@ def search_trials(query: str) -> str:
 @tool
 def check_eligibility(input_json: str) -> str:
     """Check a patient's eligibility against a specific trial's criteria.
-    Input must be JSON with keys: patient_json (serialized patient dict) and trial_id (str).
-    Example: {"patient_json": "{...}", "trial_id": "NCT00000001"}
+    Input must be a JSON string with keys: patient_json (str) and trial_id (str).
+    Example input: '{"patient_json": "{...}", "trial_id": "NCT00000001"}'
     Returns a JSON list of { criterion, status, patient_value } objects.
     Status is PASS, FAIL, or UNKNOWN."""
     data = json.loads(input_json)
