@@ -1,0 +1,41 @@
+from pydantic import BaseModel, Field
+
+
+class MatchRequest(BaseModel):
+    note: str = Field(min_length=10, description="Unstructured patient note")
+
+
+class CriterionResult(BaseModel):
+    criterion: str
+    status: str
+    patient_value: str | None
+
+
+class TrialMatch(BaseModel):
+    trial_id: str
+    trial_name: str
+    score: float
+    criteria: list[CriterionResult]
+    missing_info: list[str]
+
+
+class MatchResponse(BaseModel):
+    patient: dict
+    matches: list[TrialMatch]
+
+
+class TrialSummary(BaseModel):
+    trial_id: str
+    title: str
+
+
+class HealthResponse(BaseModel):
+    status: str
+    model: str
+
+
+class MetricsResponse(BaseModel):
+    total_requests: int
+    successful_requests: int
+    error_count: int
+    avg_latency_ms: float
