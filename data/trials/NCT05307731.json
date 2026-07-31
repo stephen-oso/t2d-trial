@@ -1,0 +1,31 @@
+{
+  "trial_id": "NCT05307731",
+  "title": "Fingolimod for Type 2 Diabetes Mellitus",
+  "status": "RECRUITING",
+  "eligibility_text": "Inclusion Criteria:\n\n1. Age: 18-70 years old;\n2. clinically diagnosed type 2 diabetes.\n3. Glycosylated hemoglobin: 6.5% - 9.5%;\n4. No drug treatment or only one oral hypoglycemic drug within 6 months;\n5. Fasting blood glucose: \\< 13.9mmol/l for those without medication, or \\< 13.3mmol/l for those with medication;\n6. if the antidiabetic drugs are taken, the dosage and the drug must be stable in the past 3 months.\n7. Body mass index (BMI) \u2264 45 kg / m2;\n8. Sign informed consent\n\nExclusion Criteria:\n\n1. patients with type 1 diabetes;\n2. diabetic complications (ketoacidosis, hypertonic state, lactic acidosis).\n3. Allergic to the study drug;\n4. Abnormal liver and kidney function (transaminase greater than 2.5 times the upper limit of normal value; creatinine greater than 133umol / L);\n5. Complicated with other serious organ diseases;\n6. Recent disease history (within the past 6 months): myocardial infarction, unstable angina pectoris, stroke, transient ischemic attack, decompensated heart failure requiring hospitalization, or class III / IV heart failure;\n7. Presence or history of mobitz type II second or third degree AV block or sick sinus syndrome, unless the patient has a pacemaker;\n8. Baseline QT interval extension (male \\> 450ms or female \\> 460ms);\n9. Treatment with class IA or class III antiarrhythmic drugs;\n10. Patients with systemic infection (including but not limited to bacteria, fungi, viruses, etc.);\n11. Participating in other clinical trials within 3 months;\n12. Other circumstances that the investigator considers unsuitable for participating in this clinical study.",
+  "eligibility_criteria": "Inclusion Criteria:\n\n1. Age: 18-70 years old;\n2. clinically diagnosed type 2 diabetes.\n3. Glycosylated hemoglobin: 6.5% - 9.5%;\n4. No drug treatment or only one oral hypoglycemic drug within 6 months;\n5. Fasting blood glucose: \\< 13.9mmol/l for those without medication, or \\< 13.3mmol/l for those with medication;\n6. if the antidiabetic drugs are taken, the dosage and the drug must be stable in the past 3 months.\n7. Body mass index (BMI) \u2264 45 kg / m2;\n8. Sign informed consent\n\nExclusion Criteria:\n\n1. patients with type 1 diabetes;\n2. diabetic complications (ketoacidosis, hypertonic state, lactic acidosis).\n3. Allergic to the study drug;\n4. Abnormal liver and kidney function (transaminase greater than 2.5 times the upper limit of normal value; creatinine greater than 133umol / L);\n5. Complicated with other serious organ diseases;\n6. Recent disease history (within the past 6 months): myocardial infarction, unstable angina pectoris, stroke, transient ischemic attack, decompensated heart failure requiring hospitalization, or class III / IV heart failure;\n7. Presence or history of mobitz type II second or third degree AV block or sick sinus syndrome, unless the patient has a pacemaker;\n8. Baseline QT interval extension (male \\> 450ms or female \\> 460ms);\n9. Treatment with class IA or class III antiarrhythmic drugs;\n10. Patients with systemic infection (including but not limited to bacteria, fungi, viruses, etc.);\n11. Participating in other clinical trials within 3 months;\n12. Other circumstances that the investigator considers unsuitable for participating in this clinical study.",
+  "inclusion": [
+    "1. Age: 18-70 years old;",
+    "2. clinically diagnosed type 2 diabetes.",
+    "3. Glycosylated hemoglobin: 6.5% - 9.5%;",
+    "4. No drug treatment or only one oral hypoglycemic drug within 6 months;",
+    "5. Fasting blood glucose: \\< 13.9mmol/l for those without medication, or \\< 13.3mmol/l for those with medication;",
+    "6. if the antidiabetic drugs are taken, the dosage and the drug must be stable in the past 3 months.",
+    "7. Body mass index (BMI) \u2264 45 kg / m2;",
+    "8. Sign informed consent"
+  ],
+  "exclusion": [
+    "1. patients with type 1 diabetes;",
+    "2. diabetic complications (ketoacidosis, hypertonic state, lactic acidosis).",
+    "3. Allergic to the study drug;",
+    "4. Abnormal liver and kidney function (transaminase greater than 2.5 times the upper limit of normal value; creatinine greater than 133umol / L);",
+    "5. Complicated with other serious organ diseases;",
+    "6. Recent disease history (within the past 6 months): myocardial infarction, unstable angina pectoris, stroke, transient ischemic attack, decompensated heart failure requiring hospitalization, or class III / IV heart failure;",
+    "7. Presence or history of mobitz type II second or third degree AV block or sick sinus syndrome, unless the patient has a pacemaker;",
+    "8. Baseline QT interval extension (male \\> 450ms or female \\> 460ms);",
+    "9. Treatment with class IA or class III antiarrhythmic drugs;",
+    "10. Patients with systemic infection (including but not limited to bacteria, fungi, viruses, etc.);",
+    "11. Participating in other clinical trials within 3 months;",
+    "12. Other circumstances that the investigator considers unsuitable for participating in this clinical study."
+  ]
+}

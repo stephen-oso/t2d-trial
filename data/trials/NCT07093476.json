@@ -1,0 +1,17 @@
+{
+  "trial_id": "NCT07093476",
+  "title": "Efficacy and Safety of Add-On Therapy With Empagliflozin in Patients With Type 2 Diabetes on a Background of Alogliptin and Metformin",
+  "status": "RECRUITING",
+  "eligibility_text": "Inclusion Criteria:\n\n* Adults at the time of signing the Informed Consent Form (ICF)\n* Signed the written ICF voluntarily after being fully informed of the objectives, methods, and effects of the study\n* Diagnosed with T2DM\n\nExclusion Criteria:\n\n* Diagnosed with other types of diabetes than T2DM\n* History of hypersensitivity reaction to the components or drugs of the same class as the IP or the background therapy\n* Uncontrolled severe complications of diabetes",
+  "eligibility_criteria": "Inclusion Criteria:\n\n* Adults at the time of signing the Informed Consent Form (ICF)\n* Signed the written ICF voluntarily after being fully informed of the objectives, methods, and effects of the study\n* Diagnosed with T2DM\n\nExclusion Criteria:\n\n* Diagnosed with other types of diabetes than T2DM\n* History of hypersensitivity reaction to the components or drugs of the same class as the IP or the background therapy\n* Uncontrolled severe complications of diabetes",
+  "inclusion": [
+    "Adults at the time of signing the Informed Consent Form (ICF)",
+    "Signed the written ICF voluntarily after being fully informed of the objectives, methods, and effects of the study",
+    "Diagnosed with T2DM"
+  ],
+  "exclusion": [
+    "Diagnosed with other types of diabetes than T2DM",
+    "History of hypersensitivity reaction to the components or drugs of the same class as the IP or the background therapy",
+    "Uncontrolled severe complications of diabetes"
+  ]
+}

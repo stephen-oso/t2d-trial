@@ -1,0 +1,21 @@
+{
+  "trial_id": "NCT07237685",
+  "title": "Evaluating Atherosclerotic Disease Progression in Patients With Diabetes Mellitus",
+  "status": "RECRUITING",
+  "eligibility_text": "Inclusion Criteria:\n\n* Age over 18 years\n* Previous completion of CCTA scan for CAD assessment\n* Diagnosed with Type 2 Diabetes and currently receiving glucose lowering treatment\n* Sufficient image quality of the CCTA scan (at least 2/3 vessels of sufficient quality for assessment).\n\nExclusion Criteria:\n\n* Inability to provide written informed consent\n* Presence of an unstable condition\n* Ingeligibility for CCTA acquisition due to severe renal dysfunction (eGFR \u2264 30 mL/min/1.73m\u00b2) or known hypersensitivity or contraindication to CT contrast agents\n* Any other treatment or clinically relevant condition that could interfere with the conduct or interpretation of the study in the opinion of the investigator\n* inability or unwillingness to comply with the protocol requirements, or deemed by investigator to be unfit for the study\n* Baseline (routine care) CCTA performed \\< 2 years or \\> 5 years before inclusion",
+  "eligibility_criteria": "Inclusion Criteria:\n\n* Age over 18 years\n* Previous completion of CCTA scan for CAD assessment\n* Diagnosed with Type 2 Diabetes and currently receiving glucose lowering treatment\n* Sufficient image quality of the CCTA scan (at least 2/3 vessels of sufficient quality for assessment).\n\nExclusion Criteria:\n\n* Inability to provide written informed consent\n* Presence of an unstable condition\n* Ingeligibility for CCTA acquisition due to severe renal dysfunction (eGFR \u2264 30 mL/min/1.73m\u00b2) or known hypersensitivity or contraindication to CT contrast agents\n* Any other treatment or clinically relevant condition that could interfere with the conduct or interpretation of the study in the opinion of the investigator\n* inability or unwillingness to comply with the protocol requirements, or deemed by investigator to be unfit for the study\n* Baseline (routine care) CCTA performed \\< 2 years or \\> 5 years before inclusion",
+  "inclusion": [
+    "Age over 18 years",
+    "Previous completion of CCTA scan for CAD assessment",
+    "Diagnosed with Type 2 Diabetes and currently receiving glucose lowering treatment",
+    "Sufficient image quality of the CCTA scan (at least 2/3 vessels of sufficient quality for assessment)."
+  ],
+  "exclusion": [
+    "Inability to provide written informed consent",
+    "Presence of an unstable condition",
+    "Ingeligibility for CCTA acquisition due to severe renal dysfunction (eGFR \u2264 30 mL/min/1.73m\u00b2) or known hypersensitivity or contraindication to CT contrast agents",
+    "Any other treatment or clinically relevant condition that could interfere with the conduct or interpretation of the study in the opinion of the investigator",
+    "inability or unwillingness to comply with the protocol requirements, or deemed by investigator to be unfit for the study",
+    "Baseline (routine care) CCTA performed \\< 2 years or \\> 5 years before inclusion"
+  ]
+}
