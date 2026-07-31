@@ -1,6 +1,7 @@
 import json
 import os
-from openai import OpenAI
+import time
+from openai import OpenAI, RateLimitError
 from dotenv import load_dotenv
 from langchain_core.tools import tool
 from ingestion.embed_trials import get_chroma_collection
@@ -10,6 +11,7 @@ load_dotenv()
 _client = OpenAI(
     base_url="https://api.groq.com/openai/v1",
     api_key=os.environ["GROQ_API_KEY"],
+    max_retries=6,  # retry on 429 with exponential backoff
 )
 
 
@@ -36,11 +38,22 @@ def search_trials(query: str) -> str:
 def check_eligibility(input_json: str) -> str:
     """Check a patient's eligibility against a specific trial's criteria.
     Input must be JSON with keys: patient_json (serialized patient dict) and trial_id (str).
+    Example: {"patient_json": "{...}", "trial_id": "NCT00000001"}
     Returns a JSON list of { criterion, status, patient_value } objects.
     Status is PASS, FAIL, or UNKNOWN."""
     data = json.loads(input_json)
-    patient = json.loads(data["patient_json"])
     trial_id = data["trial_id"]
+
+    # Handle both {"patient_json": "<JSON string>", ...} and {"patient": {...}, ...}
+    if "patient_json" in data:
+        patient_raw = data["patient_json"]
+        patient = json.loads(patient_raw) if isinstance(patient_raw, str) else patient_raw
+    elif "patient" in data:
+        patient = data["patient"]
+    else:
+        # Maybe the patient fields are directly in the data dict minus trial_id
+        patient = {k: v for k, v in data.items() if k != "trial_id"}
+
 
     # Get the trial criteria from ChromaDB
     collection = get_chroma_collection()
@@ -82,7 +95,29 @@ Return ONLY the JSON array, no explanation."""
 
     # The model may return {"verdicts": [...]} or similar — extract the list
     raw = json.loads(response.choices[0].message.content)
-    verdicts = raw if isinstance(raw, list) else next(iter(raw.values()))
+
+    # Normalize to a flat list of verdict dicts
+    if isinstance(raw, list):
+        # Sometimes model returns [{}, [...actual data...]] — flatten and filter
+        verdicts = []
+        for item in raw:
+            if isinstance(item, list):
+                verdicts.extend(item)
+            elif isinstance(item, dict) and item:  # skip empty dicts
+                verdicts.append(item)
+    elif isinstance(raw, dict):
+        # e.g. {"verdicts": [...]} — get the first list value
+        for val in raw.values():
+            if isinstance(val, list):
+                verdicts = val
+                break
+        else:
+            verdicts = []
+    else:
+        verdicts = []
+
+    # Filter out items that don't have the expected "status" key
+    verdicts = [v for v in verdicts if isinstance(v, dict) and "status" in v]
     return json.dumps(verdicts)
 
 
