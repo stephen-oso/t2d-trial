@@ -21,7 +21,7 @@ _metrics = {
 
 @app.get("/health", response_model=HealthResponse)
 def health():
-    return HealthResponse(status="healthy", model="gemma2-9b-it")
+    return HealthResponse(status="healthy", model="llama-3.1-8b-instant")
 
 
 @app.get("/trials", response_model=list[TrialSummary])
