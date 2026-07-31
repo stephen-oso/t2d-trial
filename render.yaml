@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: t2d-trial-screener
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: QDRANT_URL
+        sync: false
+      - key: QDRANT_API_KEY
+        sync: false
+
+  - type: cron
+    name: keepwarm
+    env: python
+    schedule: "*/14 * * * *"
+    buildCommand: pip install requests
+    startCommand: python -c "import requests, os; requests.get(os.environ['APP_URL'] + '/health')"
+    envVars:
+      - key: APP_URL
+        sync: false
