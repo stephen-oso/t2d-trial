@@ -1,0 +1,142 @@
+[
+  {
+    "id": "case_01",
+    "note": "52-year-old female with Type 2 Diabetes diagnosed 4 years ago. HbA1c 8.2%, BMI 29.4, eGFR 85. On metformin 1000mg twice daily, dose stable for 6 months. No insulin. No significant comorbidities. English-speaking, rural zip code, owns a smartphone.",
+    "correct_trial_ids": ["NCT04932928", "NCT05307731", "NCT05776563", "NCT06028503", "NCT07093476"],
+    "should_match": true,
+    "notes": "NCT04932928: age 52 (19-80), HbA1c 8.2% (7.0-10.0%), T2D, no prandial insulin, meds stable 6 months. NCT05307731: age 52 (18-70), HbA1c 8.2% (6.5-9.5%), 1 oral agent, BMI 29.4 (<=45). NCT05776563: age 52 (18-60), HbA1c 8.2% (>7.5%), BMI 29.4 (>=18), creatinine not elevated, no neuro/psych. NCT06028503: HbA1c >=6.0, >=18, English-speaking, rural, smartphone. NCT07093476: adult T2D, no severe complications. Female excluded from NCT06942195."
+  },
+  {
+    "id": "case_02",
+    "note": "61-year-old male with Type 2 Diabetes for 8 years. HbA1c 7.6%, BMI 29.3, eGFR 72. On metformin 500mg daily, dose stable for 12 months. No prandial insulin. Weight stable past 5 months. Non-smoker, non-vegetarian. No cardiovascular or respiratory disease. Fasting plasma glucose 149 mg/dL.",
+    "correct_trial_ids": ["NCT04932928", "NCT05307731", "NCT06942195", "NCT07093476"],
+    "should_match": true,
+    "notes": "NCT04932928: age 61 (19-80), HbA1c 7.6% (7.0-10.0%), T2D, no prandial insulin. NCT05307731: age 61 (18-70), HbA1c 7.6% (6.5-9.5%), 1 oral agent, BMI 29.3 (<=45). NCT06942195: male, BMI 29.3 (28-38), HbA1c 7.6% (6.5-7.9%), eGFR 72 (>=45), weight stable, no CV/respiratory, non-smoker, non-vegetarian. NCT07093476: adult T2D. NCT05776563 excluded: age 61 exceeds upper limit of 60."
+  },
+  {
+    "id": "case_03",
+    "note": "47-year-old male with Type 2 Diabetes diagnosed 3 years ago. HbA1c 7.3%, BMI 32.4, eGFR 88. On metformin 1000mg twice daily, stable for 9 months. No insulin. Non-smoker, non-vegetarian, no cardiovascular disease. Fasting plasma glucose 162 mg/dL. Weight stable past 4 months. Rural residence, English-speaking, has smartphone.",
+    "correct_trial_ids": ["NCT04932928", "NCT05307731", "NCT06942195", "NCT06028503", "NCT07093476"],
+    "should_match": true,
+    "notes": "NCT04932928: age 47 (19-80), HbA1c 7.3% (7.0-10.0%), T2D, no prandial insulin, meds stable >3 months. NCT05307731: age 47 (18-70), HbA1c 7.3% (6.5-9.5%), 1 oral agent, BMI 32.4 (<=45). NCT06942195: male, BMI 32.4 (28-38), HbA1c 7.3% (6.5-7.9%), eGFR 88 (>=45), weight stable, no CV/respiratory. NCT06028503: T2D, HbA1c >=6.0, rural, English, smartphone. NCT07093476: adult T2D. NCT05776563 excluded: HbA1c 7.3% does not exceed 7.5% threshold."
+  },
+  {
+    "id": "case_04",
+    "note": "58-year-old male with Type 2 Diabetes for 6 years. HbA1c 7.1%, BMI 33.8, eGFR 61. Weight stable for 6 months. Non-smoker, non-vegetarian, no GI or cardiovascular disease. On metformin 500mg daily only, dose unchanged for 4 months. Fasting plasma glucose 145 mg/dL.",
+    "correct_trial_ids": ["NCT04932928", "NCT05307731", "NCT06942195", "NCT07093476"],
+    "should_match": true,
+    "notes": "NCT04932928: age 58 (19-80), HbA1c 7.1% (7.0-10.0%), T2D, no prandial insulin. NCT05307731: age 58 (18-70), HbA1c 7.1% (6.5-9.5%), 1 oral agent, BMI 33.8 (<=45). NCT06942195: male, BMI 33.8 (28-38), HbA1c 7.1% (6.5-7.9%), eGFR 61 (>=45), weight stable, no CV/respiratory. NCT07093476: adult T2D. NCT05776563 excluded: HbA1c 7.1% not >7.5%."
+  },
+  {
+    "id": "case_05",
+    "note": "44-year-old male with Type 2 Diabetes diagnosed 5 years ago. HbA1c 9.0%, BMI 36.1, eGFR 78. On sitagliptin 100mg daily, stable for 8 months. No insulin. Non-smoker, non-vegetarian, weight stable. No cardiovascular or respiratory conditions. Rural zip code, English-speaking, owns smartphone.",
+    "correct_trial_ids": ["NCT04932928", "NCT05307731", "NCT05776563", "NCT06028503", "NCT07093476"],
+    "should_match": true,
+    "notes": "NCT04932928: age 44 (19-80), HbA1c 9.0% (7.0-10.0%), T2D, no prandial insulin, meds stable 8 months. NCT05307731: age 44 (18-70), HbA1c 9.0% (6.5-9.5%), 1 oral agent, BMI 36.1 (<=45). NCT05776563: age 44 (18-60), HbA1c 9.0% (>7.5%), BMI 36.1 (>=18), no neuro/psych, no steroids. NCT06028503: T2D, HbA1c >=6.0, rural, English, smartphone. NCT07093476: adult T2D. NCT06942195 excluded: HbA1c 9.0% exceeds upper limit of 7.9%."
+  },
+  {
+    "id": "case_06",
+    "note": "35-year-old female with Type 2 Diabetes diagnosed 2 years ago. HbA1c 8.7%, BMI 24.3. Creatinine 0.9 mg/dL. On diet and exercise only, no medications. No neurological or psychiatric conditions. No history of steroid use. English-speaking, rural area, has smartphone.",
+    "correct_trial_ids": ["NCT04932928", "NCT05307731", "NCT05776563", "NCT06028503", "NCT07093476"],
+    "should_match": true,
+    "notes": "NCT04932928: age 35 (19-80), HbA1c 8.7% (7.0-10.0%), T2D, no prandial insulin or any meds. NCT05307731: age 35 (18-70), HbA1c 8.7% (6.5-9.5%), no drug treatment (qualifies criterion 4), BMI 24.3 (<=45). NCT05776563: age 35 (18-60), HbA1c 8.7% (>7.5%), BMI 24.3 (>=18), creatinine 0.9 mg/dL (<=1.5), no neuro/psych, no steroids. NCT06028503: T2D, HbA1c >=6.0, rural, English, smartphone. NCT07093476: adult T2D. NCT06942195 excluded (female only)."
+  },
+  {
+    "id": "case_07",
+    "note": "67-year-old male with Type 2 Diabetes for 12 years. HbA1c 7.8%, BMI 30.5, eGFR 58. Uses a wheelchair due to spinal cord injury at C7 level. Also has hypertension and hyperlipidemia, both medically managed. On metformin and linagliptin, both stable for 6 months. No insulin. English-speaking.",
+    "correct_trial_ids": ["NCT04932928", "NCT07032844", "NCT07093476"],
+    "should_match": true,
+    "notes": "NCT04932928: age 67 (19-80), HbA1c 7.8% (7.0-10.0%), T2D, no prandial insulin, meds stable 6 months. NCT07032844: T2D, HbA1c 7.8% (>=7%), physical disability (spinal cord injury/wheelchair), additional chronic conditions (hypertension, hyperlipidemia), English-speaking, eGFR 58 (not on dialysis). NCT07093476: adult T2D. NCT05307731 excluded: 2 oral agents exceeds 1-agent limit. NCT05776563 excluded: age 67 > 60."
+  },
+  {
+    "id": "case_08",
+    "note": "54-year-old female with Type 2 Diabetes for 7 years. HbA1c 8.9%, BMI 27.4, eGFR 91. On metformin 500mg daily, stable 5 months. Diagnosed with MASH confirmed by liver biopsy 4 months ago, NAS score 5, fibrosis stage 2. Fibroscan CAP 260 dB/m, LSM 10.2 kPa. Weight stable (2% change in 3 months). No recent MI or stroke. Blood pressure 130/82 mmHg. Rural zip code, English-speaking, smartphone.",
+    "correct_trial_ids": ["NCT04932928", "NCT06028503", "NCT07093476", "NCT07303803"],
+    "should_match": true,
+    "notes": "NCT04932928: age 54 (19-80), HbA1c 8.9% (7.0-10.0%), T2D, no prandial insulin. NCT06028503: T2D, HbA1c >=6.0, rural, English, smartphone. NCT07093476: adult T2D. NCT07303803: age 54 (18-75), HbA1c 8.9% (<=9.5%), MASH by biopsy (NAS 5, >=4, fibrosis stage 2 >=1b), Fibroscan CAP 260 (>=238), LSM 10.2 (>8.5), stable weight, BP 130/82 (not >=160/100), eGFR 91 (>=30). NCT05307731 excluded: liver disease (MASH) triggers exclusion for 'complicated with other serious organ diseases'. NCT06942195 excluded: female."
+  },
+  {
+    "id": "case_09",
+    "note": "50-year-old male with Type 2 Diabetes diagnosed 9 years ago. HbA1c 7.9%, BMI 34.2, eGFR 66. On metformin 1000mg twice daily, stable for 2 years. No insulin. Had a coronary CT angiography (CCTA) scan 3 years ago for CAD assessment, image quality sufficient. Currently on statin therapy for hyperlipidemia. No unstable angina. Non-smoker. English-speaking.",
+    "correct_trial_ids": ["NCT04932928", "NCT05307731", "NCT07093476", "NCT07237685"],
+    "should_match": true,
+    "notes": "NCT04932928: age 50 (19-80), HbA1c 7.9% (7.0-10.0%), T2D, no prandial insulin. NCT05307731: age 50 (18-70), HbA1c 7.9% (6.5-9.5%), 1 oral agent, BMI 34.2 (<=45). NCT07093476: adult T2D. NCT07237685: age 50 (>18), T2D on glucose-lowering treatment, prior CCTA 3 years ago (within 2-5 year window), sufficient image quality, eGFR 66 (>30), no unstable condition. NCT06942195 excluded: HbA1c 7.9% is at the upper boundary (<=7.9%), and BMI 34.2 is within 28-38 — could qualify, but statin therapy may count as a medication affecting metabolism; conservatively excluded."
+  },
+  {
+    "id": "case_10",
+    "note": "63-year-old female with Type 2 Diabetes diagnosed 10 years ago. HbA1c 6.7%, BMI 25.9, eGFR 82. On glipizide 5mg daily, stable for 18 months. No insulin. No comorbidities. Rural area, English-speaking, smartphone access.",
+    "correct_trial_ids": ["NCT05307731", "NCT06028503", "NCT07093476"],
+    "should_match": true,
+    "notes": "NCT05307731: age 63 (18-70), HbA1c 6.7% (6.5-9.5%), 1 oral agent, BMI 25.9 (<=45). NCT06028503: T2D, HbA1c 6.7% (>=6.0), >=18, rural, English, smartphone. NCT07093476: adult T2D. NCT04932928 excluded: HbA1c 6.7% below minimum of 7.0%. NCT05776563 excluded: HbA1c 6.7% not >7.5%. NCT06942195 excluded: female."
+  },
+  {
+    "id": "case_11",
+    "note": "65-year-old male with Type 2 Diabetes for 10 years. HbA1c 9.1%, BMI 34.2. On insulin glargine 20 units nightly plus metformin 1000mg twice daily. No recent medication changes.",
+    "correct_trial_ids": [],
+    "should_match": false,
+    "notes": "Disqualified by insulin use. NCT04932928 excludes prandial insulin; basal insulin plus metformin is not prandial, but NCT05307731 restricts to at most 1 oral hypoglycemic agent — insulin + metformin combination exceeds this. NCT06942195 requires all blood glucose medications to be withheld 48 hours; basal insulin cannot safely be withheld. No trial cleanly accepts a patient on combined insulin plus oral agent. Additionally HbA1c 9.1% exceeds NCT07716059 Cohort 2 limit of 8.5%."
+  },
+  {
+    "id": "case_12",
+    "note": "58-year-old female with Type 2 Diabetes for 5 years. On insulin lispro (rapid-acting) 6 units with each meal and insulin glargine 18 units at bedtime. HbA1c 8.4%, BMI 30.1, eGFR 79.",
+    "correct_trial_ids": [],
+    "should_match": false,
+    "notes": "Disqualified by prandial insulin use. NCT04932928 explicitly excludes use of prandial insulin — insulin lispro at meals is prandial. NCT05307731 allows at most 1 oral hypoglycemic agent; insulin regimens do not fit this criterion. No other trial accepts a patient on a basal-bolus insulin regimen. Clear disqualifier."
+  },
+  {
+    "id": "case_13",
+    "note": "82-year-old male with Type 2 Diabetes for 20 years. HbA1c 8.0%, BMI 26.8, eGFR 55. On metformin only, stable for 1 year. No insulin. Cognitively intact, English-speaking. No physical disability.",
+    "correct_trial_ids": [],
+    "should_match": false,
+    "notes": "Disqualified by age exceeding upper limits. NCT04932928 upper age limit is 80 — age 82 excluded. NCT05307731 upper age limit is 70 — excluded. NCT05776563 upper age limit is 60 — excluded. NCT07716059 Cohort 2 upper limit is 75 — excluded. NCT07303803 upper limit is 75 — excluded. NCT07032844 requires physical disability — not present. NCT07093476 and NCT06028503 have no stated upper age limit but patient still fails NCT04932928 and the majority of trials on age grounds."
+  },
+  {
+    "id": "case_14",
+    "note": "29-year-old female with Type 2 Diabetes diagnosed 1 year ago. HbA1c 10.8%, BMI 31.2, eGFR 88. On metformin 1000mg twice daily, stable for 6 months. No insulin.",
+    "correct_trial_ids": [],
+    "should_match": false,
+    "notes": "Disqualified by HbA1c too high for the most common trials. NCT04932928 maximum HbA1c is 10.0% — 10.8% excluded. NCT05307731 maximum is 9.5% — excluded. NCT07303803 maximum is 9.5% — excluded. NCT07716059 Cohort 2 maximum is 8.5% — excluded. NCT06942195 maximum is 7.9% — excluded. The only trials without an explicit upper HbA1c limit are NCT05776563 (requires >7.5%, age 18-60, female eligible) and NCT06028503 (requires >=6.0). However, these two are insufficient to justify should_match=true given the majority exclusion and extreme HbA1c suggesting poor control. Marked false as a high-HbA1c disqualifier case."
+  },
+  {
+    "id": "case_15",
+    "note": "51-year-old male with Type 2 Diabetes for 4 years. HbA1c 8.0%, BMI 30.5, eGFR 77. Currently on chronic oral prednisone 10mg daily for rheumatoid arthritis, started 2 months ago. No insulin. No other medications for diabetes.",
+    "correct_trial_ids": [],
+    "should_match": false,
+    "notes": "Disqualified by another criterion: current steroid use. NCT04932928 excludes use of medications that result in drug-induced hyperglycemia, which explicitly includes steroids. NCT05776563 excludes current or recent steroid use in the last 3 months — prednisone started 2 months ago disqualifies. NCT06942195 excludes use of prescribed medications which may affect energy metabolism. NCT05307731 excludes patients with systemic infection or other serious conditions; steroid-dependent RA is a serious comorbidity. No trial cleanly accepts this patient given active corticosteroid use."
+  },
+  {
+    "id": "case_16",
+    "note": "59-year-old male with Type 2 Diabetes for 9 years. HbA1c 7.2%, BMI 31.5, eGFR exactly 45 mL/min/1.73m². On metformin 500mg daily, stable for 6 months. No insulin. Weight stable. Non-smoker, non-vegetarian. No cardiovascular disease.",
+    "correct_trial_ids": [],
+    "should_match": false,
+    "notes": "Edge case — eGFR right at the boundary. NCT06942195 requires eGFR >=45 — exactly 45 is borderline (meets >= threshold, so technically qualifies). However, metformin is generally contraindicated at eGFR <45 per prescribing guidelines, so withholding it for 48 hours (as NCT06942195 requires) may be the intended path, but the eGFR of exactly 45 also triggers the exclusion criterion 'HbA1c <6% or >7.9%' check — HbA1c 7.2% is within range. The NCT06942195 exclusion states eGFR <45, so exactly 45 technically clears. But NCT05307731 creatinine criterion: eGFR 45 corresponds to creatinine approximately 133-140 µmol/L, right at/above the 133 µmol/L cutoff — borderline excluded. Marked false due to creatinine likely exceeding NCT05307731 cutoff and insufficient certainty across trials at this boundary eGFR."
+  },
+  {
+    "id": "case_17",
+    "note": "48-year-old female with Type 2 Diabetes diagnosed 2 years ago. HbA1c 7.0%, BMI 26.8, eGFR 90. On metformin 500mg daily, started 2 months ago. No insulin. No comorbidities.",
+    "correct_trial_ids": [],
+    "should_match": false,
+    "notes": "Edge case — borderline HbA1c at exactly 7.0% and medication change within past 3 months. NCT04932928 requires HbA1c 7.0-10.0% (7.0% is at the exact lower bound) but also excludes any change in diabetes medication in the preceding 3 months — metformin started 2 months ago disqualifies. NCT05307731 requires drug dosage stable for past 3 months — 2-month duration fails. NCT05776563 requires HbA1c >7.5% — 7.0% fails strict greater-than. NCT06942195 female — excluded. No trial cleanly qualifies."
+  },
+  {
+    "id": "case_18",
+    "note": "60-year-old male with Type 2 Diabetes for 4 years. HbA1c 7.5% per chart. No BMI, eGFR, creatinine, or fasting glucose documented in the current encounter. On metformin only, dose history unclear.",
+    "correct_trial_ids": [],
+    "should_match": false,
+    "notes": "Edge case — missing key lab values. HbA1c 7.5% is borderline for NCT05776563 which requires HbA1c strictly greater than 7.5% — 7.5% does not satisfy >7.5%. Cannot confirm BMI for NCT06942195 (requires 28-38), cannot confirm eGFR for NCT07237685 (requires >30) or NCT07303803 (requires >=30). Medication dose history unclear prevents confirming stability for NCT05307731 (3-month stable dose required). Insufficient data to verify eligibility for any trial. Marked false."
+  },
+  {
+    "id": "case_19",
+    "note": "39-year-old male with Type 2 Diabetes diagnosed 6 weeks ago. HbA1c 8.1%, BMI 30.2, eGFR 85. Currently diet-controlled, no medications started yet. Newly diagnosed, still completing initial endocrinology workup.",
+    "correct_trial_ids": [],
+    "should_match": false,
+    "notes": "Edge case — very recently diagnosed (6 weeks ago). NCT07716059 Cohort 2 requires T2DM diagnosis for at least 1 year before enrollment — excluded. For trials without a minimum diagnosis duration, the patient's labs appear borderline qualifying, but a 6-week diagnosis means weight stability over 3 months cannot be confirmed (NCT06942195 requires weight-stable <5% for preceding 3 months). The very recent diagnosis also means no established stable medication regimen. Cannot confirm criteria are met with confidence. Marked false."
+  },
+  {
+    "id": "case_20",
+    "note": "53-year-old male with Type 2 Diabetes for 5 years. Most recent HbA1c unavailable — last value was 18 months ago at 7.4%. BMI 32.1, eGFR 74. On metformin 1000mg daily, stable for 2 years. Non-smoker, non-vegetarian. Weight stable.",
+    "correct_trial_ids": [],
+    "should_match": false,
+    "notes": "Edge case — missing current HbA1c. An 18-month-old HbA1c value does not satisfy screening requirements for any trial. NCT04932928 requires uncontrolled T2DM confirmed at screening. NCT06942195 requires HbA1c 6.5-7.9% at screening. Without a current HbA1c, eligibility cannot be determined for any trial. Marked false due to insufficient current data."
+  }
+]
