@@ -1,0 +1,116 @@
+import json
+import os
+from openai import OpenAI
+from dotenv import load_dotenv
+from langchain_core.tools import tool
+from ingestion.embed_trials import get_chroma_collection
+
+load_dotenv()
+
+_client = OpenAI(
+    base_url="https://api.groq.com/openai/v1",
+    api_key=os.environ["GROQ_API_KEY"],
+)
+
+
+@tool
+def search_trials(query: str) -> str:
+    """Search the clinical trial database for trials relevant to a patient query.
+    Returns a JSON list of trials with their eligibility criteria."""
+    collection = get_chroma_collection()
+    results = collection.query(query_texts=[query], n_results=5)
+
+    trials = []
+    for i, meta in enumerate(results["metadatas"][0]):
+        trials.append({
+            "trial_id": meta["trial_id"],
+            "title": meta["title"],
+            "inclusion": json.loads(meta["inclusion"]),
+            "exclusion": json.loads(meta["exclusion"]),
+        })
+
+    return json.dumps(trials)
+
+
+@tool
+def check_eligibility(input_json: str) -> str:
+    """Check a patient's eligibility against a specific trial's criteria.
+    Input must be JSON with keys: patient_json (serialized patient dict) and trial_id (str).
+    Returns a JSON list of { criterion, status, patient_value } objects.
+    Status is PASS, FAIL, or UNKNOWN."""
+    data = json.loads(input_json)
+    patient = json.loads(data["patient_json"])
+    trial_id = data["trial_id"]
+
+    # Get the trial criteria from ChromaDB
+    collection = get_chroma_collection()
+    result = collection.get(ids=[trial_id], include=["metadatas"])
+    if not result["metadatas"]:
+        return json.dumps([{"criterion": "trial not found", "status": "UNKNOWN", "patient_value": None}])
+
+    meta = result["metadatas"][0]
+    inclusion = json.loads(meta["inclusion"])
+    exclusion = json.loads(meta["exclusion"])
+
+    all_criteria = (
+        [f"INCLUDE: {c}" for c in inclusion] +
+        [f"EXCLUDE: {c}" for c in exclusion]
+    )
+
+    prompt = f"""You are checking if a patient meets clinical trial eligibility criteria.
+
+Patient data:
+{json.dumps(patient, indent=2)}
+
+Criteria to check (each starts with INCLUDE or EXCLUDE):
+{chr(10).join(f"- {c}" for c in all_criteria)}
+
+For each criterion, return a JSON array. Each item must have:
+- "criterion": the criterion text (without INCLUDE/EXCLUDE prefix)
+- "status": "PASS", "FAIL", or "UNKNOWN" (UNKNOWN if the patient data doesn't have enough info)
+- "patient_value": the relevant patient value as a string, or null if unknown
+
+For EXCLUDE criteria: PASS means the patient does NOT have the exclusion (good). FAIL means they DO (bad).
+Return ONLY the JSON array, no explanation."""
+
+    response = _client.chat.completions.create(
+        model="llama-3.1-8b-instant",
+        messages=[{"role": "user", "content": prompt}],
+        response_format={"type": "json_object"},
+        temperature=0,
+    )
+
+    # The model may return {"verdicts": [...]} or similar — extract the list
+    raw = json.loads(response.choices[0].message.content)
+    verdicts = raw if isinstance(raw, list) else next(iter(raw.values()))
+    return json.dumps(verdicts)
+
+
+@tool
+def score_match(verdicts_json: str) -> str:
+    """Score a patient's overall match for a trial based on criterion verdicts.
+    Input: JSON list of { criterion, status, patient_value } objects.
+    Returns JSON: { score: float 0-1, missing: list[str] }
+    Score = (PASS count) / (PASS + FAIL count). UNKNOWN criteria lower the score slightly.
+    Score is 0.0 if any FAIL is present."""
+    verdicts = json.loads(verdicts_json)
+
+    passes = sum(1 for v in verdicts if v["status"] == "PASS")
+    fails = sum(1 for v in verdicts if v["status"] == "FAIL")
+    unknowns = sum(1 for v in verdicts if v["status"] == "UNKNOWN")
+    missing = [v["criterion"] for v in verdicts if v["status"] == "UNKNOWN"]
+
+    # Any FAIL means this trial is not a match
+    if fails > 0:
+        return json.dumps({"score": 0.0, "missing": missing})
+
+    total = passes + fails
+    if total == 0:
+        score = 0.0
+    else:
+        base_score = passes / total
+        # Each unknown criterion docks 0.05 (max 0.2 dock)
+        unknown_penalty = min(unknowns * 0.05, 0.2)
+        score = max(0.0, base_score - unknown_penalty)
+
+    return json.dumps({"score": round(score, 3), "missing": missing})
