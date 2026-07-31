@@ -37,13 +37,14 @@ def _get_collection():
                     return {"metadatas": metadatas}
 
                 def get(self, ids, include=None):
-                    results = client.scroll(
+                    # Scroll all points (10 trials) and filter in Python —
+                    # avoids needing a Qdrant payload index on trial_id.
+                    all_points, _ = client.scroll(
                         collection_name=COLLECTION_NAME,
-                        scroll_filter=Filter(
-                            must=[FieldCondition(key="trial_id", match=MatchAny(any=ids))]
-                        ),
-                    )[0]
-                    return {"metadatas": [r.payload for r in results]}
+                        limit=100,
+                    )
+                    matched = [p.payload for p in all_points if p.payload.get("trial_id") in ids]
+                    return {"metadatas": matched}
 
             return QdrantCollection()
         except Exception as exc:
