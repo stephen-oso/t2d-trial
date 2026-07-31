@@ -46,10 +46,14 @@ def _get_collection():
                     return {"metadatas": [r.payload for r in results]}
 
             return QdrantCollection()
-        except Exception:
+        except Exception as exc:
             # Qdrant URL is set but cluster is unreachable (e.g. placeholder creds,
             # no network in CI).  Fall back to ChromaDB so local tests still pass.
-            pass
+            import logging
+            logging.getLogger(__name__).warning(
+                "Qdrant unreachable (%s: %s) — falling back to ChromaDB",
+                type(exc).__name__, exc,
+            )
 
     # Local dev / test / Qdrant unreachable: use ChromaDB
     from ingestion.embed_trials import get_chroma_collection
