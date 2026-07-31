@@ -64,7 +64,6 @@ def fetch_and_save_trials(
             "title": title,
             "status": status,
             "eligibility_text": elig_text,
-            "eligibility_criteria": elig_text,
             "inclusion": inclusion,
             "exclusion": exclusion,
         }
