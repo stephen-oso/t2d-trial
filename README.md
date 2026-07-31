@@ -5,7 +5,7 @@ Paste a patient note, get back a ranked list of T2D trial matches with per-crite
 
 ## Live API
 
-`https://t2d-trial-screener.onrender.com/docs`
+`https://t2d-trial-screener-production.up.railway.app/docs`
 
 ## What it does
 
