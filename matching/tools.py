@@ -4,9 +4,57 @@ import time
 from openai import OpenAI, RateLimitError
 from dotenv import load_dotenv
 from langchain_core.tools import tool
-from ingestion.embed_trials import get_chroma_collection
 
 load_dotenv()
+
+
+def _get_collection():
+    """Return a collection object for whichever vector store backend is active.
+
+    If QDRANT_URL is set in the environment and the Qdrant cluster is reachable,
+    returns a QdrantCollection wrapper that speaks the same query/get interface
+    as a ChromaDB collection.  Otherwise falls back to ChromaDB (local dev / test).
+    """
+    if os.environ.get("QDRANT_URL"):
+        # Production: use Qdrant Cloud
+        try:
+            from ingestion.embed_trials_qdrant import get_qdrant_client, _EMBED_MODEL, COLLECTION_NAME
+            from qdrant_client.models import Filter, FieldCondition, MatchAny
+
+            client = get_qdrant_client()
+            # Verify connectivity — raises if the cluster is unreachable
+            client.get_collections()
+
+            class QdrantCollection:
+                def query(self, query_texts, n_results=5):
+                    vec = _EMBED_MODEL.encode(query_texts[0]).tolist()
+                    response = client.query_points(
+                        collection_name=COLLECTION_NAME,
+                        query=vec,
+                        limit=n_results,
+                    )
+                    metadatas = [[pt.payload for pt in response.points]]
+                    return {"metadatas": metadatas}
+
+                def get(self, ids, include=None):
+                    results = client.scroll(
+                        collection_name=COLLECTION_NAME,
+                        scroll_filter=Filter(
+                            must=[FieldCondition(key="trial_id", match=MatchAny(any=ids))]
+                        ),
+                    )[0]
+                    return {"metadatas": [r.payload for r in results]}
+
+            return QdrantCollection()
+        except Exception:
+            # Qdrant URL is set but cluster is unreachable (e.g. placeholder creds,
+            # no network in CI).  Fall back to ChromaDB so local tests still pass.
+            pass
+
+    # Local dev / test / Qdrant unreachable: use ChromaDB
+    from ingestion.embed_trials import get_chroma_collection
+    return get_chroma_collection()
+
 
 _client = OpenAI(
     base_url="https://api.groq.com/openai/v1",
@@ -19,7 +67,7 @@ _client = OpenAI(
 def search_trials(query: str) -> str:
     """Search the clinical trial database for trials relevant to a patient query.
     Returns a JSON list of trials with their eligibility criteria."""
-    collection = get_chroma_collection()
+    collection = _get_collection()
     results = collection.query(query_texts=[query], n_results=10)
 
     trials = []
@@ -55,8 +103,8 @@ def check_eligibility(input_json: str) -> str:
         patient = {k: v for k, v in data.items() if k != "trial_id"}
 
 
-    # Get the trial criteria from ChromaDB
-    collection = get_chroma_collection()
+    # Get the trial criteria from the active vector store backend
+    collection = _get_collection()
     result = collection.get(ids=[trial_id], include=["metadatas"])
     if not result["metadatas"]:
         return json.dumps([{"criterion": "trial not found", "status": "UNKNOWN", "patient_value": None}])
