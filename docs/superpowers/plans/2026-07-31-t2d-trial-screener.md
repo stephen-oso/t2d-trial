@@ -6,12 +6,12 @@
 
 **Architecture:** Unstructured patient note → Groq extracts a typed PatientProfile → ChromaDB semantic search retrieves relevant trial criteria → LangGraph ReAct agent checks eligibility criterion-by-criterion → ranked matches returned via FastAPI. Evaluation runs against 20 manually verified synthetic test cases.
 
-**Tech Stack:** Python 3.11+, Groq API (llama3-8b-8192), sentence-transformers (all-MiniLM-L6-v2), ChromaDB (local) → Qdrant Cloud (deployed), LangGraph + langchain-groq, DeepEval + pytest, FastAPI + uvicorn, Render.com
+**Tech Stack:** Python 3.11+, Groq API (llama-3.1-8b-instant), sentence-transformers (all-MiniLM-L6-v2), ChromaDB (local) → Qdrant Cloud (deployed), LangGraph + langchain-groq, DeepEval + pytest, FastAPI + uvicorn, Render.com
 
 ## Global Constraints
 
 - Python 3.11+ only — use `int | None` union syntax, not `Optional[int]`
-- Groq model: `llama3-8b-8192` throughout — do not swap models mid-plan
+- Groq model: `llama-3.1-8b-instant` throughout — do not swap models mid-plan
 - No LangChain in Phase 1 — raw `openai` SDK calls only (Groq is OpenAI-compatible)
 - LangChain/LangGraph introduced in Phase 2 (Task 6) and beyond
 - ChromaDB for all local phases (1–3); Qdrant Cloud only in Phase 4 (Task 10)
@@ -520,7 +520,7 @@ on_insulin is true only if the patient currently uses any insulin product."""
 def extract_patient_profile(note: str) -> PatientProfile:
     """Extract a structured PatientProfile from an unstructured clinical note."""
     response = _client.chat.completions.create(
-        model="llama3-8b-8192",
+        model="llama-3.1-8b-instant",
         messages=[
             {"role": "system", "content": _SYSTEM_PROMPT},
             {"role": "user", "content": f"Extract from this note:\n\n{note}"},
@@ -872,7 +872,7 @@ For EXCLUDE criteria: PASS means the patient does NOT have the exclusion (good).
 Return ONLY the JSON array, no explanation."""
 
     response = _client.chat.completions.create(
-        model="llama3-8b-8192",
+        model="llama-3.1-8b-instant",
         messages=[{"role": "user", "content": prompt}],
         response_format={"type": "json_object"},
         temperature=0,
@@ -997,7 +997,7 @@ from matching.tools import search_trials, check_eligibility, score_match
 load_dotenv()
 
 _llm = ChatGroq(
-    model="llama3-8b-8192",
+    model="llama-3.1-8b-instant",
     api_key=os.environ["GROQ_API_KEY"],
     temperature=0,
 )
@@ -1051,7 +1051,7 @@ Find matching clinical trials and score each one."""
         api_key=os.environ["GROQ_API_KEY"],
     )
     format_response = client.chat.completions.create(
-        model="llama3-8b-8192",
+        model="llama-3.1-8b-instant",
         messages=[
             {"role": "user", "content": f"""Convert this trial matching summary into JSON.
 
@@ -1426,7 +1426,7 @@ _metrics = {
 
 @app.get("/health", response_model=HealthResponse)
 def health():
-    return HealthResponse(status="healthy", model="llama3-8b-8192")
+    return HealthResponse(status="healthy", model="llama-3.1-8b-instant")
 
 
 @app.get("/trials", response_model=list[TrialSummary])
@@ -1682,7 +1682,7 @@ Render builds automatically on push. Watch the build logs. First build takes ~5 
 
 ```bash
 curl https://t2d-trial-screener.onrender.com/health
-# Expected: {"status":"healthy","model":"llama3-8b-8192"}
+# Expected: {"status":"healthy","model":"llama-3.1-8b-instant"}
 
 curl -X POST https://t2d-trial-screener.onrender.com/match \
   -H "Content-Type: application/json" \
@@ -1707,7 +1707,7 @@ Takes an unstructured patient note, extracts a structured profile, and returns
 ranked clinical trial matches with per-criterion pass/fail verdicts.
 
 ## Stack
-Groq (llama3-8b-8192) · Qdrant Cloud · sentence-transformers · LangGraph · FastAPI · Render
+Groq (llama-3.1-8b-instant) · Qdrant Cloud · sentence-transformers · LangGraph · FastAPI · Render
 
 ## Evaluation Results
 Precision: [fill in] | Recall: [fill in]

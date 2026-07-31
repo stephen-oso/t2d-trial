@@ -45,7 +45,7 @@ Two independent pieces that connect at the end.
 
 **Patient Profile Extraction (Structured Extraction side):**
 - Input: unstructured SOAP note or patient summary
-- Use direct Groq API (llama3-8b-8192) + Pydantic to extract:
+- Use direct Groq API (llama-3.1-8b-instant) + Pydantic to extract:
   - `age: int`
   - `sex: str`
   - `months_since_diagnosis: int | None`
@@ -126,7 +126,7 @@ POST /match
   }
 
 GET /trials       → list of all 10 curated trials
-GET /health       → { "status": "healthy", "model": "llama3-8b-8192" }
+GET /health       → { "status": "healthy", "model": "llama-3.1-8b-instant" }
 GET /metrics      → request count, avg latency, error rate
 ```
 
@@ -153,7 +153,7 @@ GET /metrics      → request count, avg latency, error rate
 
 ```
 Language:      Python 3.11+
-LLM:           Groq API (llama3-8b-8192) — free tier
+LLM:           Groq API (llama-3.1-8b-instant) — free tier
 Embeddings:    sentence-transformers/all-MiniLM-L6-v2 (local, free)
 Vector DB:     ChromaDB (Phase 1–3 local) → Qdrant Cloud (Phase 4)
 Agent:         LangGraph (introduced Phase 2)

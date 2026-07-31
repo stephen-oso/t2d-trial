@@ -34,7 +34,7 @@ on_insulin is true only if the patient currently uses any insulin product."""
 def extract_patient_profile(note: str) -> PatientProfile:
     """Extract a structured PatientProfile from an unstructured clinical note."""
     response = _client.chat.completions.create(
-        model="llama3-8b-8192",
+        model="llama-3.1-8b-instant",
         messages=[
             {"role": "system", "content": _SYSTEM_PROMPT},
             {"role": "user", "content": f"Extract from this note:\n\n{note}"},
