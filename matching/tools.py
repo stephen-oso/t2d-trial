@@ -19,11 +19,21 @@ def _get_collection():
         # Production: use Qdrant Cloud
         try:
             from ingestion.embed_trials_qdrant import get_qdrant_client, _EMBED_MODEL, COLLECTION_NAME
-            from qdrant_client.models import Filter, FieldCondition, MatchAny
+            from qdrant_client.models import Filter, FieldCondition, MatchAny, PayloadSchemaType
 
             client = get_qdrant_client()
             # Verify connectivity — raises if the cluster is unreachable
             client.get_collections()
+
+            # Ensure payload index exists so scroll() can filter by trial_id
+            try:
+                client.create_payload_index(
+                    collection_name=COLLECTION_NAME,
+                    field_name="trial_id",
+                    field_schema=PayloadSchemaType.KEYWORD,
+                )
+            except Exception:
+                pass  # index already exists
 
             class QdrantCollection:
                 def query(self, query_texts, n_results=5):
@@ -73,7 +83,7 @@ def search_trials(query: str) -> str:
     """Search the clinical trial database for trials relevant to a patient query.
     Returns a JSON list of trials with their eligibility criteria."""
     collection = _get_collection()
-    results = collection.query(query_texts=[query], n_results=10)
+    results = collection.query(query_texts=[query], n_results=5)
 
     trials = []
     for i, meta in enumerate(results["metadatas"][0]):
@@ -123,7 +133,7 @@ def check_eligibility(input_json: str) -> str:
         [f"EXCLUDE: {c}" for c in exclusion]
     )
 
-    prompt = f"""You are checking if a patient meets clinical trial eligibility criteria. Be strict and precise.
+    prompt = f"""You are checking if a patient meets clinical trial eligibility criteria.
 
 Patient data:
 {json.dumps(patient, indent=2)}
@@ -133,16 +143,16 @@ Criteria to check (each starts with INCLUDE or EXCLUDE):
 
 For each criterion, return a JSON array. Each item must have:
 - "criterion": the criterion text (without INCLUDE/EXCLUDE prefix)
-- "status": "PASS", "FAIL", or "UNKNOWN" (UNKNOWN only if the patient data truly lacks the required info)
+- "status": "PASS", "FAIL", or "UNKNOWN"
 - "patient_value": the relevant patient value as a string, or null if unknown
 
 Rules:
 - For INCLUDE criteria: PASS if the patient clearly meets it, FAIL if they clearly do not, UNKNOWN if data is missing.
 - For EXCLUDE criteria: PASS means the patient does NOT have the exclusion (safe to include). FAIL means they DO have it (excluded).
-- Apply numeric comparisons strictly: if a criterion says ">7.5%" and the patient has exactly 7.5%, that is FAIL (not PASS).
-- If a criterion says ">=45" and the patient has exactly 45, that is PASS.
+- Numeric range checks: If a criterion specifies a numeric range (e.g., "HbA1c 7.0-10.0%" or "age 18-70"), check the patient value against that range ONLY. If the criterion text has a label before the range (e.g., "Uncontrolled type 2 DM: HbA1c 7.0-10.0%"), the label is just a description — evaluate ONLY the numeric range part.
+- Strict numeric comparisons: if a criterion says ">7.5%" and the patient has exactly 7.5%, that is FAIL. If it says ">=7.5%" or "7.0-10.0%" and the patient has 7.5%, that is PASS.
 - If the patient data has null or missing for a required field, mark UNKNOWN — do not assume.
-- If the patient has a disqualifying condition that is explicitly listed as an exclusion, mark FAIL.
+- Only mark FAIL when the patient clearly and definitively does not meet the criterion based on available data.
 Return ONLY the JSON array, no explanation."""
 
     response = _client.chat.completions.create(
@@ -188,11 +198,27 @@ def score_match(verdicts_json: str) -> str:
     Score = (PASS count) / (PASS + FAIL count). UNKNOWN criteria lower the score slightly.
     Score is 0.0 if any FAIL is present."""
     verdicts = json.loads(verdicts_json)
+    # Handle double-encoded JSON (LLM may serialize the string a second time)
+    if isinstance(verdicts, str):
+        verdicts = json.loads(verdicts)
+    # Normalize list elements that are JSON strings (LLM may double-encode items)
+    normalized = []
+    for v in verdicts:
+        if isinstance(v, dict):
+            normalized.append(v)
+        elif isinstance(v, str) and v.strip():
+            try:
+                parsed = json.loads(v)
+                if isinstance(parsed, dict):
+                    normalized.append(parsed)
+            except json.JSONDecodeError:
+                pass
+    verdicts = [v for v in normalized if "status" in v]
 
     passes = sum(1 for v in verdicts if v["status"] == "PASS")
     fails = sum(1 for v in verdicts if v["status"] == "FAIL")
     unknowns = sum(1 for v in verdicts if v["status"] == "UNKNOWN")
-    missing = [v["criterion"] for v in verdicts if v["status"] == "UNKNOWN"]
+    missing = [v.get("criterion", "") for v in verdicts if v["status"] == "UNKNOWN"]
 
     # Any FAIL means this trial is not a match
     if fails > 0:

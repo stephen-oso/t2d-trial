@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams, PointStruct
+from qdrant_client.models import Distance, VectorParams, PointStruct, PayloadSchemaType
 from sentence_transformers import SentenceTransformer
 
 load_dotenv()
@@ -17,6 +17,7 @@ def get_qdrant_client() -> QdrantClient:
     return QdrantClient(
         url=os.environ["QDRANT_URL"],
         api_key=os.environ["QDRANT_API_KEY"],
+        timeout=60,
     )
 
 
@@ -50,6 +51,14 @@ def embed_trials_qdrant(trials_dir: str = "data/trials") -> None:
         ))
 
     client.upsert(collection_name=COLLECTION_NAME, points=points)
+
+    # Create keyword index so get() can filter by trial_id without scanning all points
+    client.create_payload_index(
+        collection_name=COLLECTION_NAME,
+        field_name="trial_id",
+        field_schema=PayloadSchemaType.KEYWORD,
+    )
+
     print(f"Uploaded {len(points)} trials to Qdrant Cloud")
 
 

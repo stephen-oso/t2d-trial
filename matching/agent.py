@@ -29,6 +29,12 @@ load_dotenv()
 # LLMs to call correctly.  These thin wrappers expose natural parameters while
 # delegating to the original implementations (which the tools-tests still cover).
 
+# Full verdicts cached here so check_eligibility can return a compact summary to
+# the LLM (keeping agent context under the 6k-TPM free-tier limit) while
+# _parse_messages() still has the raw data to compute scores.
+_eligibility_results: dict[str, list] = {}
+
+
 @lc_tool
 def search_trials(query: str) -> str:
     """Search T2D clinical trials for a patient.
@@ -44,14 +50,25 @@ def search_trials(query: str) -> str:
 @lc_tool
 def check_eligibility(patient_json: str, trial_id: str) -> str:
     """Check whether a patient meets eligibility criteria for one specific trial.
-    Returns a JSON list of {criterion, status, patient_value} objects.
-    Status is PASS, FAIL, or UNKNOWN.
+    Returns compact JSON: {trial_id, pass, fail, unknown} counts.
+    Status of each criterion is PASS, FAIL, or UNKNOWN.
     Args:
         patient_json: The patient profile serialised as a JSON string.
         trial_id: The trial ID to check (e.g. "NCT04932928").
     """
     input_payload = json.dumps({"patient_json": patient_json, "trial_id": trial_id})
-    return _check_eligibility_impl.invoke({"input_json": input_payload})
+    full_result = _check_eligibility_impl.invoke({"input_json": input_payload})
+    try:
+        verdicts = json.loads(full_result)
+        if isinstance(verdicts, list):
+            _eligibility_results[trial_id] = verdicts
+            passes = sum(1 for v in verdicts if isinstance(v, dict) and v.get("status") == "PASS")
+            fails = sum(1 for v in verdicts if isinstance(v, dict) and v.get("status") == "FAIL")
+            unknowns = sum(1 for v in verdicts if isinstance(v, dict) and v.get("status") == "UNKNOWN")
+            return json.dumps({"trial_id": trial_id, "pass": passes, "fail": fails, "unknown": unknowns})
+    except (json.JSONDecodeError, Exception):
+        pass
+    return full_result
 
 
 @lc_tool
@@ -76,7 +93,7 @@ _llm = ChatGroq(
 _memory = MemorySaver()
 _agent = create_react_agent(
     _llm,
-    tools=[search_trials, check_eligibility, score_match],
+    tools=[search_trials, check_eligibility],
     checkpointer=_memory,
 )
 
@@ -87,8 +104,7 @@ _SYSTEM = (
     "1. Call search_trials with a short query describing the patient.\n"
     "2. For EACH trial returned call check_eligibility, passing "
     "patient_json (the full patient JSON as a string) and trial_id.\n"
-    "3. For EACH eligibility result call score_match with the verdicts JSON string.\n"
-    "4. After scoring all trials, respond with a brief summary."
+    "3. After checking all trials, respond with a brief summary."
 )
 
 
@@ -117,18 +133,17 @@ def _compute_score(verdicts: list[dict]) -> tuple[float, list[str]]:
 
 
 def _parse_messages(messages: list) -> list[dict]:
-    """Parse agent messages to extract match data from ToolMessage results.
+    """Parse agent messages to build match results.
 
-    Extracts verdicts from check_eligibility ToolMessage outputs (keyed by
-    trial_id from the AIMessage tool_call args), then computes scores locally
-    using the same deterministic formula as score_match — no additional LLM
-    call and no fragile correlation across tool boundaries.
+    Trial titles come from search_trials ToolMessage outputs.
+    Full verdicts come from _eligibility_results (populated by the
+    check_eligibility wrapper) — the ToolMessage content is only a compact
+    summary kept small enough to stay within the free-tier TPM limit.
 
     Returns a list of match dicts sorted by score descending.
     """
-    # Build maps from tool_call_id
-    call_info: dict[str, tuple[str, dict]] = {}  # id -> (name, args)
-    call_output: dict[str, str] = {}             # id -> raw content string
+    call_info: dict[str, tuple[str, dict]] = {}
+    call_output: dict[str, str] = {}
 
     for msg in messages:
         msg_type = type(msg).__name__
@@ -150,27 +165,9 @@ def _parse_messages(messages: list) -> list[dict]:
             except (json.JSONDecodeError, KeyError):
                 pass
 
-    # --- check_eligibility: trial_id -> verdicts ---
-    # The agent wrapper exposes separate (patient_json, trial_id) params so
-    # we can reliably read trial_id from the tool call args.
-    trial_verdicts: dict[str, list] = {}
-    for call_id, (name, args) in call_info.items():
-        if name == "check_eligibility" and call_id in call_output:
-            tid = args.get("trial_id")
-            if tid:
-                try:
-                    verdicts = json.loads(call_output[call_id])
-                    if isinstance(verdicts, list):
-                        trial_verdicts[tid] = verdicts
-                except json.JSONDecodeError:
-                    pass
-
-    # --- Compute scores locally from the raw verdicts ---
-    # We do NOT use the agent's score_match tool call outputs because the LLM
-    # may reformat the verdicts before passing them to score_match, producing
-    # incorrect scores.  The deterministic computation here is reliable.
+    # --- Build matches from cached verdicts ---
     matches: list[dict] = []
-    for trial_id, verdicts in trial_verdicts.items():
+    for trial_id, verdicts in _eligibility_results.items():
         score, missing_info = _compute_score(verdicts)
         criteria = [
             {
@@ -209,7 +206,9 @@ def run_match(note: str) -> dict:
                                       criteria, missing_info
         }
     """
-    # llama-3.3-70b-versatile free tier: 12,000 TPM. Each run uses ~6-7k tokens.
+    # Clear per-run verdict cache before each invocation.
+    _eligibility_results.clear()
+    # llama-3.1-8b-instant free tier: 6,000 TPM / 500,000 TPD.
     # Sleep 60s between runs to stay within the per-minute budget.
     time.sleep(60)
     profile = extract_patient_profile(note)
@@ -223,7 +222,7 @@ def run_match(note: str) -> dict:
 
     config = {
         "configurable": {"thread_id": f"match-{hash(note)}"},
-        "recursion_limit": 15,
+        "recursion_limit": 30,
     }
     result = _agent.invoke(
         {"messages": [{"role": "system", "content": _SYSTEM},

@@ -30,21 +30,26 @@ GET  /metrics   → request count, avg latency, error rate
 | Layer | Technology |
 |---|---|
 | LLM (extraction) | Groq API — llama-3.1-8b-instant |
-| LLM (agent) | Groq API — gemma2-9b-it |
+| LLM (agent + eligibility) | Groq API — llama-3.1-8b-instant |
 | Embeddings | sentence-transformers/all-MiniLM-L6-v2 (local) |
 | Vector DB | Qdrant Cloud (production) / ChromaDB (local) |
 | Agent | LangGraph ReAct |
 | API | FastAPI + uvicorn |
-| Deployment | Render.com |
+| Deployment | Railway |
 
 ## Evaluation Results
 
+Tested against 20 synthetic patient cases (10 qualifying, 5 disqualified, 5 edge cases) using a threshold of 0.5.
+
 | Metric | Score |
 |---|---|
-| Precision | [fill in after running `python evaluation/test_screener.py`] |
-| Recall | [fill in after running `python evaluation/test_screener.py`] |
+| Precision | 46.2% |
+| Recall | 14.3% |
+| True Positives | 6 |
+| False Positives | 7 |
+| False Negatives | 36 |
 
-Tested against 20 manually verified synthetic patient cases (10 qualifying, 5 disqualified, 5 edge cases).
+**Why these numbers:** The system uses `llama-3.1-8b-instant` on the Groq free tier (6,000 TPM limit), which constrains the agent to compact per-criterion verdicts rather than full reasoning chains. The small model is conservative — it marks many criteria UNKNOWN rather than PASS, which drives down recall. The tradeoff keeps the system runnable without paid API access while demonstrating the full RAG + agent + evaluation pipeline end-to-end.
 
 ## Local Setup
 
