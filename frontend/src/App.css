@@ -47,3 +47,77 @@ body {
   color: #94a3b8;
 }
 .patient-card__value { font-size: 0.9rem; color: #1e293b; }
+
+/* TrialCard */
+.trial-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.trial-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.trial-card__name  { font-weight: 600; font-size: 0.95rem; }
+.trial-card__id    { font-size: 0.75rem; color: #94a3b8; margin-top: 2px; }
+.trial-card__score-label { font-size: 1.1rem; font-weight: 700; }
+.trial-card__bar-track {
+  height: 8px;
+  background: #f1f5f9;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.trial-card__bar-fill { height: 100%; border-radius: 4px; }
+.trial-card__toggle {
+  align-self: flex-start;
+  background: none;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  color: #475569;
+}
+.trial-card__toggle:hover { background: #f8fafc; }
+
+/* Criteria table */
+.criteria-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.criteria-table th {
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+.criteria-table td {
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: top;
+}
+.criteria-table tr:last-child td { border-bottom: none; }
+
+/* Missing info */
+.trial-card__missing {
+  margin-top: 0.25rem;
+  padding: 0.75rem;
+  background: #f8fafc;
+  border-radius: 6px;
+}
+.trial-card__missing-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 0.25rem;
+}
+.trial-card__missing ul {
+  padding-left: 1.25rem;
+  font-size: 0.8rem;
+  color: #64748b;
+}
