@@ -209,9 +209,9 @@ def run_match(note: str) -> dict:
                                       criteria, missing_info
         }
     """
-    # Free-tier Groq TPM limit is 6000 tokens/min. Each agent run consumes
-    # ~2000 tokens across ReAct steps. Sleep 30s to cap at 2 runs/min.
-    time.sleep(30)
+    # llama-3.3-70b-versatile free tier: 12,000 TPM. Each run uses ~6-7k tokens.
+    # Sleep 60s between runs to stay within the per-minute budget.
+    time.sleep(60)
     profile = extract_patient_profile(note)
     patient_dict = profile.model_dump()
     patient_json_str = json.dumps(patient_dict)
