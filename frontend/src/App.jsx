@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import PatientCard from './components/PatientCard';
 import TrialCard from './components/TrialCard';
+import HistoryDrawer from './components/HistoryDrawer';
 import './App.css';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -23,12 +24,25 @@ A: T2DM suboptimally controlled (HbA1c 8.2%). Hypertension not at goal (BP 142/8
 
 P: Consider GLP-1 agonist or SGLT2 inhibitor given CKD and CV risk. Increase Lisinopril to 20mg. Refer endocrinology, ophthalmology. Follow up 8 weeks.`;
 
+function buildSnippet(patient) {
+  const parts = [];
+  if (patient.age != null) parts.push(`${patient.age} yrs`);
+  if (patient.hba1c != null) parts.push(`HbA1c ${patient.hba1c}%`);
+  if (patient.bmi != null) parts.push(`BMI ${patient.bmi}`);
+  return parts.join(' • ') || 'Patient';
+}
+
 export default function App() {
   const [view, setView] = useState('input');
   const [note, setNote] = useState('');
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [loadingStep, setLoadingStep] = useState(0);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [history, setHistory] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('t2d_history') || '[]'); }
+    catch { return []; }
+  });
   const intervalRef = useRef(null);
 
   function startInterval() {
@@ -41,6 +55,19 @@ export default function App() {
   function stopInterval() { clearInterval(intervalRef.current); }
 
   useEffect(() => () => stopInterval(), []);
+
+  function saveHistory(data) {
+    const entry = {
+      id: Date.now().toString(),
+      timestamp: new Date().toISOString(),
+      snippet: buildSnippet(data.patient),
+      matchCount: data.matches.length,
+      result: data,
+    };
+    const next = [entry, ...history].slice(0, 5);
+    setHistory(next);
+    try { localStorage.setItem('t2d_history', JSON.stringify(next)); } catch {}
+  }
 
   async function handleSubmit() {
     setView('loading');
@@ -55,6 +82,7 @@ export default function App() {
       if (!res.ok) throw new Error(`API error ${res.status}`);
       const data = await res.json();
       setResult(data);
+      saveHistory(data);
       setView('results');
     } catch (e) {
       setError(e.message);
@@ -71,6 +99,17 @@ export default function App() {
     setError(null);
   }
 
+  function restoreFromHistory(entry) {
+    setResult(entry.result);
+    setView('results');
+    setDrawerOpen(false);
+  }
+
+  function clearHistory() {
+    setHistory([]);
+    try { localStorage.removeItem('t2d_history'); } catch {}
+  }
+
   return (
     <div className="app">
       <header className="app__header">
@@ -79,6 +118,9 @@ export default function App() {
             <p className="app__title">T2D Trial Pre-Screener</p>
             <p className="app__subtitle">Clinical trial matching for Type 2 Diabetes</p>
           </div>
+          <button className="btn btn--ghost" onClick={() => setDrawerOpen(true)}>
+            Recent Searches
+          </button>
         </div>
       </header>
 
@@ -162,6 +204,14 @@ export default function App() {
           </div>
         )}
       </main>
+
+      <HistoryDrawer
+        open={drawerOpen}
+        history={history}
+        onClose={() => setDrawerOpen(false)}
+        onRestore={restoreFromHistory}
+        onClear={clearHistory}
+      />
     </div>
   );
 }
