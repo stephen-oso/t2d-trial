@@ -66,10 +66,10 @@ function buildCSV(result) {
     m.criteria.forEach(c => {
       rows.push([
         `"${m.trial_name.replace(/"/g, '""')}"`,
-        m.trial_id,
+        `"${m.trial_id.replace(/"/g, '""')}"`,
         pct,
         `"${c.criterion.replace(/"/g, '""')}"`,
-        c.status,
+        `"${c.status.replace(/"/g, '""')}"`,
         c.patient_value ? `"${String(c.patient_value).replace(/"/g, '""')}"` : '',
       ]);
     });
@@ -110,9 +110,11 @@ export default function App() {
       matchCount: data.matches.length,
       result: data,
     };
-    const next = [entry, ...history].slice(0, 5);
-    setHistory(next);
-    try { localStorage.setItem('t2d_history', JSON.stringify(next)); } catch {}
+    setHistory(prev => {
+      const next = [entry, ...prev].slice(0, 5);
+      try { localStorage.setItem('t2d_history', JSON.stringify(next)); } catch {}
+      return next;
+    });
   }
 
   async function handleSubmit() {
@@ -166,13 +168,15 @@ export default function App() {
 
   function handleDownloadCSV() {
     const csv = buildCSV(result);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = 't2d-screener-results.csv';
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 
   return (
