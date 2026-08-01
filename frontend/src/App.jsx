@@ -12,6 +12,17 @@ const LOADING_STEPS = [
   'Scoring matches...',
 ];
 
+const SAMPLE_NOTE = `S: 58-year-old male presents for follow-up management of Type 2 Diabetes Mellitus, diagnosed 12 years ago. Reports increased fatigue and occasional blurred vision. Denies chest pain or edema.
+
+O: Vitals: BP 142/88 mmHg, Weight 94 kg, Height 175 cm (BMI 30.7).
+Labs: HbA1c 8.2%, eGFR 61 mL/min/1.73m², Creatinine 1.1 mg/dL, LDL 118, HDL 42.
+Medications: Metformin 1000mg BID, Sitagliptin 100mg QD, Lisinopril 10mg QD, Atorvastatin 20mg QD, Aspirin 81mg QD.
+PMH: T2DM (12 yrs), Hypertension, Hyperlipidemia, CKD Stage 2. Allergies: NKDA.
+
+A: T2DM suboptimally controlled (HbA1c 8.2%). Hypertension not at goal (BP 142/88). CKD Stage 2 stable.
+
+P: Consider GLP-1 agonist or SGLT2 inhibitor given CKD and CV risk. Increase Lisinopril to 20mg. Refer endocrinology, ophthalmology. Follow up 8 weeks.`;
+
 export default function App() {
   const [view, setView] = useState('input');
   const [note, setNote] = useState('');
@@ -27,9 +38,7 @@ export default function App() {
     }, 20000);
   }
 
-  function stopInterval() {
-    clearInterval(intervalRef.current);
-  }
+  function stopInterval() { clearInterval(intervalRef.current); }
 
   useEffect(() => () => stopInterval(), []);
 
@@ -65,8 +74,12 @@ export default function App() {
   return (
     <div className="app">
       <header className="app__header">
-        <h1>T2D Trial Pre-Screener</h1>
-        <p>Paste a patient note to find matching clinical trials.</p>
+        <div className="app__header-inner">
+          <div>
+            <p className="app__title">T2D Trial Pre-Screener</p>
+            <p className="app__subtitle">Clinical trial matching for Type 2 Diabetes</p>
+          </div>
+        </div>
       </header>
 
       <main className="app__main">
@@ -82,6 +95,15 @@ export default function App() {
             />
             {view === 'input' && (
               <>
+                <div className="input-section__footer">
+                  <button
+                    className="input-section__sample-link"
+                    onClick={() => setNote(SAMPLE_NOTE)}
+                  >
+                    Load sample note
+                  </button>
+                  <p className="input-section__hint">Analysis takes ~90 seconds</p>
+                </div>
                 <button
                   className="btn btn--primary"
                   onClick={handleSubmit}
@@ -89,13 +111,27 @@ export default function App() {
                 >
                   Find Matching Trials
                 </button>
-                <p className="input-section__hint">Analysis takes ~90 seconds</p>
               </>
             )}
             {view === 'loading' && (
               <div className="loading">
-                <div className="loading__spinner" />
-                <p className="loading__message">{LOADING_STEPS[loadingStep]}</p>
+                <div className="loading__steps">
+                  {LOADING_STEPS.map((step, i) => (
+                    <div
+                      key={i}
+                      className={`loading__step${
+                        i < loadingStep
+                          ? ' loading__step--done'
+                          : i === loadingStep
+                          ? ' loading__step--active'
+                          : ''
+                      }`}
+                    >
+                      <div className="loading__step-dot" />
+                      <span>{step}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -103,9 +139,11 @@ export default function App() {
 
         {view === 'results' && result && (
           <div className="results">
-            <button className="btn btn--secondary" onClick={reset}>
-              New Search
-            </button>
+            <div className="results__actions">
+              <button className="btn btn--secondary btn--sm" onClick={reset}>
+                New Search
+              </button>
+            </div>
             <PatientCard patient={result.patient} />
             <h2 className="results__heading">
               {result.matches.length} Trial{result.matches.length !== 1 ? 's' : ''} Found
@@ -120,9 +158,7 @@ export default function App() {
           <div className="error">
             <p className="error__message">Something went wrong. Please try again.</p>
             <p className="error__detail">{error}</p>
-            <button className="btn btn--secondary" onClick={reset}>
-              Try Again
-            </button>
+            <button className="btn btn--secondary" onClick={reset}>Try Again</button>
           </div>
         )}
       </main>
