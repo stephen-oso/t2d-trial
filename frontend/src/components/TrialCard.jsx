@@ -2,9 +2,9 @@ import { useState } from 'react';
 import StatusBadge from './StatusBadge';
 
 function scoreColor(score) {
-  if (score >= 0.7) return '#2d7a4f';
-  if (score >= 0.3) return '#b45309';
-  return '#b91c1c';
+  if (score >= 0.7) return '#16a34a';
+  if (score >= 0.4) return '#d97706';
+  return '#dc2626';
 }
 
 export default function TrialCard({ match }) {
@@ -17,7 +17,14 @@ export default function TrialCard({ match }) {
       <div className="trial-card__header">
         <div>
           <p className="trial-card__name">{trial_name}</p>
-          <p className="trial-card__id">{trial_id}</p>
+          <a
+            className="trial-card__id"
+            href={`https://clinicaltrials.gov/study/${trial_id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {trial_id} ↗
+          </a>
         </div>
         <span className="trial-card__score-label" style={{ color: scoreColor(score) }}>
           {pct}%
