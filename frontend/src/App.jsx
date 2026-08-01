@@ -32,6 +32,51 @@ function buildSnippet(patient) {
   return parts.join(' • ') || 'Patient';
 }
 
+function buildCopyText(result) {
+  const p = result.patient;
+  const fmt = (val, unit) => val != null ? `${val}${unit}` : '—';
+  const lines = [
+    'T2D Trial Pre-Screener Results',
+    '',
+    'Patient Profile:',
+    `Age: ${fmt(p.age, ' yrs')} | HbA1c: ${fmt(p.hba1c, '%')} | BMI: ${fmt(p.bmi, '')} | eGFR: ${fmt(p.egfr, ' mL/min')}`,
+    `BP: ${fmt(p.systolic_bp, '')}/${fmt(p.diastolic_bp, '')} mmHg | Weight: ${fmt(p.weight_kg, ' kg')}`,
+    `Medications: ${p.medications?.join(', ') || '—'}`,
+    `Diagnoses: ${p.diagnoses?.join(', ') || '—'}`,
+    '',
+    `Matched Trials (${result.matches.length}):`,
+    '',
+  ];
+  result.matches.forEach((m, i) => {
+    const pct = Math.round(m.score * 100);
+    lines.push(`${i + 1}. ${m.trial_name} (${m.trial_id}) — ${pct}%`);
+    m.criteria.forEach(c => {
+      const sym = c.status === 'PASS' ? '✓' : c.status === 'FAIL' ? '✗' : '?';
+      lines.push(`   ${sym} ${c.criterion}: ${c.status}${c.patient_value ? ` (${c.patient_value})` : ''}`);
+    });
+    lines.push('');
+  });
+  return lines.join('\n');
+}
+
+function buildCSV(result) {
+  const rows = [['Trial Name', 'Trial ID', 'Score (%)', 'Criterion', 'Status', 'Patient Value']];
+  result.matches.forEach(m => {
+    const pct = Math.round(m.score * 100);
+    m.criteria.forEach(c => {
+      rows.push([
+        `"${m.trial_name.replace(/"/g, '""')}"`,
+        m.trial_id,
+        pct,
+        `"${c.criterion.replace(/"/g, '""')}"`,
+        c.status,
+        c.patient_value ? `"${String(c.patient_value).replace(/"/g, '""')}"` : '',
+      ]);
+    });
+  });
+  return rows.map(r => r.join(',')).join('\n');
+}
+
 export default function App() {
   const [view, setView] = useState('input');
   const [note, setNote] = useState('');
@@ -39,6 +84,7 @@ export default function App() {
   const [error, setError] = useState(null);
   const [loadingStep, setLoadingStep] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [history, setHistory] = useState(() => {
     try { return JSON.parse(localStorage.getItem('t2d_history') || '[]'); }
     catch { return []; }
@@ -108,6 +154,25 @@ export default function App() {
   function clearHistory() {
     setHistory([]);
     try { localStorage.removeItem('t2d_history'); } catch {}
+  }
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(buildCopyText(result));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {}
+  }
+
+  function handleDownloadCSV() {
+    const csv = buildCSV(result);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 't2d-screener-results.csv';
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   return (
@@ -184,6 +249,12 @@ export default function App() {
             <div className="results__actions">
               <button className="btn btn--secondary btn--sm" onClick={reset}>
                 New Search
+              </button>
+              <button className="btn btn--secondary btn--sm" onClick={handleCopy}>
+                {copied ? 'Copied!' : 'Copy Results'}
+              </button>
+              <button className="btn btn--secondary btn--sm" onClick={handleDownloadCSV}>
+                Download CSV
               </button>
             </div>
             <PatientCard patient={result.patient} />
