@@ -8,10 +8,9 @@ Tool results are parsed directly from result["messages"] — no extra LLM call n
 
 import json
 import os
-import time
 from dotenv import load_dotenv
 from langchain_core.tools import tool as lc_tool
-from langchain_groq import ChatGroq
+from langchain_anthropic import ChatAnthropic
 from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.memory import MemorySaver
 
@@ -83,11 +82,11 @@ def score_match(verdicts_json: str) -> str:
 
 
 # ── LLM + agent ──────────────────────────────────────────────────────────────
-_llm = ChatGroq(
-    model="llama-3.1-8b-instant",
-    api_key=os.environ["GROQ_API_KEY"],
+_llm = ChatAnthropic(
+    model="claude-haiku-4-5-20251001",
+    api_key=os.environ["ANTHROPIC_API_KEY"],
     temperature=0,
-    max_retries=6,  # retry on 429 rate-limit errors with exponential backoff
+    max_retries=3,
 )
 
 _memory = MemorySaver()
@@ -209,11 +208,7 @@ def run_match(note: str) -> dict:
                                       criteria, missing_info
         }
     """
-    # Clear per-run verdict cache before each invocation.
     _eligibility_results.clear()
-    # llama-3.1-8b-instant free tier: 6,000 TPM / 500,000 TPD.
-    # Sleep 60s between runs to stay within the per-minute budget.
-    time.sleep(60)
     profile = extract_patient_profile(note)
     patient_dict = profile.model_dump()
     patient_json_str = json.dumps(patient_dict)
