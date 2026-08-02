@@ -34,13 +34,14 @@ _eligibility_results: dict[str, list] = {}
 
 
 @lc_tool
-def search_trials(query: str) -> str:
+def search_trials(query: str, location: str = "") -> str:
     """Search T2D clinical trials for a patient.
     Returns JSON list of {trial_id, title}. Use trial_id with check_eligibility.
     Args:
         query: Short patient description, e.g. "T2D age 52 HbA1c 8.2 on metformin"
+        location: Optional patient location to surface nearby trials, e.g. "Toronto, ON"
     """
-    raw = _search_trials_impl.invoke({"query": query})
+    raw = _search_trials_impl.invoke({"query": query, "location": location})
     trials = json.loads(raw)
     return json.dumps([{"trial_id": t["trial_id"], "title": t["title"]} for t in trials])
 
@@ -93,7 +94,8 @@ _SYSTEM = (
     "You are a clinical trial matching assistant. "
     "Given a patient profile JSON, find which T2D trials they may qualify for.\n\n"
     "Steps:\n"
-    "1. Call search_trials with a short query describing the patient.\n"
+    "1. Call search_trials with a short query describing the patient. "
+    "If the user prompt mentions a patient location, pass it as the location argument.\n"
     "2. For EACH trial returned call check_eligibility, passing "
     "patient_json (the full patient JSON as a string) and trial_id.\n"
     "3. After checking all trials, respond with a brief summary."
@@ -187,7 +189,7 @@ def _parse_messages(messages: list) -> list[dict]:
     return matches
 
 
-def run_match(note: str) -> dict:
+def run_match(note: str, location: str | None = None) -> dict:
     """Run the full matching pipeline for a patient note via the ReAct agent.
 
     The LangGraph ReAct agent (_agent) drives all tool selection and execution
@@ -211,9 +213,10 @@ def run_match(note: str) -> dict:
     patient_dict = profile.model_dump()
     patient_json_str = json.dumps(patient_dict)
 
+    location_hint = f" The patient is located in {location}." if location else ""
     prompt = (
         f"Patient profile JSON:\n{patient_json_str}\n\n"
-        "Find matching T2D clinical trials, check eligibility for each, and score each one."
+        f"Find matching T2D clinical trials, check eligibility for each, and score each one.{location_hint}"
     )
 
     config = {

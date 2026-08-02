@@ -53,7 +53,7 @@ def match(request: MatchRequest):
     _metrics["total_requests"] += 1
     start = time.time()
     try:
-        result = run_match(request.note)
+        result = run_match(request.note, location=request.location)
         _metrics["successful_requests"] += 1
         _metrics["total_latency_ms"] += (time.time() - start) * 1000
         return MatchResponse(**result)

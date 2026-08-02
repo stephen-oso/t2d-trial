@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field, field_validator
 
 class MatchRequest(BaseModel):
     note: str = Field(min_length=10, description="Unstructured patient note")
+    location: str | None = Field(default=None, description="Patient location for nearby trial filtering (e.g. Toronto, ON)")
 
 
 class CriterionResult(BaseModel):

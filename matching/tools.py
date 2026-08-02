@@ -17,21 +17,25 @@ _anthropic_client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 
 
 @tool
-def search_trials(query: str) -> str:
+def search_trials(query: str, location: str = "") -> str:
     """Search ClinicalTrials.gov for recruiting T2D trials relevant to a patient.
     Returns a JSON list of trials with trial_id and title.
     Args:
         query: Short patient description used to find relevant trials.
+        location: Optional patient location (city, country) to surface nearby trials.
     """
     try:
-        params = urllib.parse.urlencode({
+        params: dict = {
             "query.cond": "Type 2 Diabetes",
             "query.term": query,
             "filter.overallStatus": "RECRUITING",
             "pageSize": "10",
             "fields": "NCTId,BriefTitle",
-        })
-        url = f"{_CTGOV_BASE}/studies?{params}"
+        }
+        if location:
+            params["query.locn"] = location
+        params = urllib.parse.urlencode(params)
+        url = f"{_CTGOV_BASE}/studies?{params}"  # params already url-encoded above
         req = urllib.request.Request(url, headers={"Accept": "application/json"})
         with urllib.request.urlopen(req, timeout=30) as resp:
             data = json.loads(resp.read())
