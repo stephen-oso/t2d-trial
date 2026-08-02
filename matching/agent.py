@@ -89,12 +89,6 @@ _llm = ChatAnthropic(
     max_retries=3,
 )
 
-_memory = MemorySaver()
-_agent = create_react_agent(
-    _llm,
-    tools=[search_trials, check_eligibility],
-    checkpointer=_memory,
-)
 
 _SYSTEM = (
     "You are a clinical trial matching assistant. "
@@ -209,6 +203,11 @@ def run_match(note: str) -> dict:
         }
     """
     _eligibility_results.clear()
+    agent = create_react_agent(
+        _llm,
+        tools=[search_trials, check_eligibility],
+        checkpointer=MemorySaver(),
+    )
     profile = extract_patient_profile(note)
     patient_dict = profile.model_dump()
     patient_json_str = json.dumps(patient_dict)
@@ -219,10 +218,10 @@ def run_match(note: str) -> dict:
     )
 
     config = {
-        "configurable": {"thread_id": f"match-{hash(note)}"},
+        "configurable": {"thread_id": "match"},
         "recursion_limit": 30,
     }
-    result = _agent.invoke(
+    result = agent.invoke(
         {"messages": [{"role": "system", "content": _SYSTEM},
                       {"role": "user", "content": prompt}]},
         config=config,
