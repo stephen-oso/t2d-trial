@@ -17,14 +17,22 @@ Return ONLY valid JSON matching this exact schema — no explanation, no markdow
   "sex": "male" or "female" or null,
   "months_since_diagnosis": integer or null,
   "hba1c": float or null,
+  "fasting_glucose": float or null,
+  "ogtt_2hr": float or null,
   "bmi": float or null,
   "egfr": float or null,
+  "ast": float or null,
+  "alt": float or null,
+  "alp": float or null,
+  "bilirubin": float or null,
   "current_medications": [list of strings],
   "on_insulin": true or false,
   "exclusion_flags": [list of strings describing disqualifying conditions]
 }
 If a field is not mentioned, return null for scalars and [] for lists.
-on_insulin is true only if the patient currently uses any insulin product."""
+on_insulin is true only if the patient currently uses any insulin product.
+fasting_glucose is Fasting Plasma Glucose in mg/dL. ogtt_2hr is the 2-hour OGTT glucose in mg/dL.
+ast, alt, alp are liver enzymes in U/L. bilirubin is total bilirubin in mg/dL."""
 
 
 def extract_patient_profile(note: str) -> PatientProfile:

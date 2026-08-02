@@ -40,9 +40,11 @@ function buildCopyText(result) {
     '',
     'Patient Profile:',
     `Age: ${fmt(p.age, ' yrs')} | HbA1c: ${fmt(p.hba1c, '%')} | BMI: ${fmt(p.bmi, '')} | eGFR: ${fmt(p.egfr, ' mL/min')}`,
-    `BP: ${fmt(p.systolic_bp, '')}/${fmt(p.diastolic_bp, '')} mmHg | Weight: ${fmt(p.weight_kg, ' kg')}`,
-    `Medications: ${p.medications?.join(', ') || '—'}`,
-    `Diagnoses: ${p.diagnoses?.join(', ') || '—'}`,
+    `FPG: ${fmt(p.fasting_glucose, ' mg/dL')} | OGTT 2hr: ${fmt(p.ogtt_2hr, ' mg/dL')}`,
+    `AST: ${fmt(p.ast, ' U/L')} | ALT: ${fmt(p.alt, ' U/L')} | ALP: ${fmt(p.alp, ' U/L')} | Bilirubin: ${fmt(p.bilirubin, ' mg/dL')}`,
+    `Location: ${result.location || '—'}`,
+    `Medications: ${p.current_medications?.join(', ') || '—'}`,
+    `Exclusion Flags: ${p.exclusion_flags?.join(', ') || '—'}`,
     '',
     `Matched Trials (${result.matches.length}):`,
     '',
@@ -80,6 +82,7 @@ function buildCSV(result) {
 export default function App() {
   const [view, setView] = useState('input');
   const [note, setNote] = useState('');
+  const [location, setLocation] = useState('');
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [loadingStep, setLoadingStep] = useState(0);
@@ -125,10 +128,11 @@ export default function App() {
       const res = await fetch(`${API_URL}/match`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ note }),
+        body: JSON.stringify({ note, location: location.trim() || null }),
       });
       if (!res.ok) throw new Error(`API error ${res.status}`);
       const data = await res.json();
+      data.location = location.trim() || null;
       setResult(data);
       saveHistory(data);
       setView('results');
@@ -143,6 +147,7 @@ export default function App() {
   function reset() {
     setView('input');
     setNote('');
+    setLocation('');
     setResult(null);
     setError(null);
   }
@@ -206,6 +211,13 @@ export default function App() {
             />
             {view === 'input' && (
               <>
+                <input
+                  className="input-section__location"
+                  type="text"
+                  value={location}
+                  onChange={e => setLocation(e.target.value)}
+                  placeholder="Patient location (optional) — e.g. Toronto, ON"
+                />
                 <div className="input-section__footer">
                   <button
                     className="input-section__sample-link"
@@ -213,7 +225,7 @@ export default function App() {
                   >
                     Load sample note
                   </button>
-                  <p className="input-section__hint">Analysis takes ~90 seconds</p>
+                  <p className="input-section__hint">Analysis takes ~30 seconds</p>
                 </div>
                 <button
                   className="btn btn--primary"
@@ -261,7 +273,7 @@ export default function App() {
                 Download CSV
               </button>
             </div>
-            <PatientCard patient={result.patient} />
+            <PatientCard patient={result.patient} location={result.location} />
             <h2 className="results__heading">
               {result.matches.length} Trial{result.matches.length !== 1 ? 's' : ''} Found
             </h2>
