@@ -29,8 +29,7 @@ load_dotenv()
 # delegating to the original implementations (which the tools-tests still cover).
 
 # Full verdicts cached here so check_eligibility can return a compact summary to
-# the LLM (keeping agent context under the 6k-TPM free-tier limit) while
-# _parse_messages() still has the raw data to compute scores.
+# the ReAct LLM while _parse_messages() still has the raw data to compute scores.
 _eligibility_results: dict[str, list] = {}
 
 
@@ -161,8 +160,8 @@ def _parse_messages(messages: list) -> list[dict]:
     # --- Build matches from cached verdicts ---
     matches: list[dict] = []
     for trial_id, verdicts in _eligibility_results.items():
-        # Skip stale Qdrant entries whose criteria couldn't be loaded
-        if verdicts and verdicts[0].get("criterion") == "trial not found":
+        # Skip trials where CT.gov returned no eligibility data
+        if verdicts and verdicts[0].get("criterion") in ("trial not found", "eligibility criteria unavailable"):
             continue
         score, missing_info = _compute_score(verdicts)
         criteria = [

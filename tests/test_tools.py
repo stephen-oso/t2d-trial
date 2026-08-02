@@ -8,7 +8,7 @@ def test_search_trials_returns_json():
     assert isinstance(data, list)
     assert len(data) >= 1
     assert "trial_id" in data[0]
-    assert "inclusion" in data[0]
+    assert "title" in data[0]
 
 
 def test_check_eligibility_pass():
