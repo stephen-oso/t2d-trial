@@ -39,5 +39,7 @@ def extract_patient_profile(note: str) -> PatientProfile:
     text = response.content[0].text.strip()
     start = text.find("{")
     end = text.rfind("}") + 1
-    raw = json.loads(text[start:end] if start >= 0 and end > start else text)
+    if start < 0 or end <= start:
+        raise ValueError(f"No JSON object found in extraction response: {text[:200]}")
+    raw = json.loads(text[start:end])
     return PatientProfile(**raw)
