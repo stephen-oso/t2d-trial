@@ -1,8 +1,11 @@
 import json
+import logging
 import time
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+
+logging.basicConfig(level=logging.INFO)
 from api.models import (
     MatchRequest, MatchResponse, TrialSummary,
     HealthResponse, MetricsResponse
@@ -56,6 +59,7 @@ def match(request: MatchRequest):
         return MatchResponse(**result)
     except Exception as e:
         _metrics["error_count"] += 1
+        logging.exception("run_match failed")
         raise HTTPException(status_code=500, detail=str(e))
 
 
