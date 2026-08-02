@@ -168,6 +168,9 @@ def _parse_messages(messages: list) -> list[dict]:
     # --- Build matches from cached verdicts ---
     matches: list[dict] = []
     for trial_id, verdicts in _eligibility_results.items():
+        # Skip stale Qdrant entries whose criteria couldn't be loaded
+        if verdicts and verdicts[0].get("criterion") == "trial not found":
+            continue
         score, missing_info = _compute_score(verdicts)
         criteria = [
             {
