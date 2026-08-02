@@ -2,6 +2,7 @@ import json
 import time
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from api.models import (
     MatchRequest, MatchResponse, TrialSummary,
     HealthResponse, MetricsResponse
@@ -9,6 +10,13 @@ from api.models import (
 from matching.agent import run_match
 
 app = FastAPI(title="T2D Trial Pre-Screener", version="1.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Simple in-memory metrics — resets on server restart
 _metrics = {
