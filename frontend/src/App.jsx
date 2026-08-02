@@ -16,11 +16,11 @@ const LOADING_STEPS = [
 const SAMPLE_NOTE = `S: 58-year-old male presents for follow-up management of Type 2 Diabetes Mellitus, diagnosed 12 years ago. Reports increased fatigue and occasional blurred vision. Denies chest pain or edema.
 
 O: Vitals: BP 142/88 mmHg, Weight 94 kg, Height 175 cm (BMI 30.7).
-Labs: HbA1c 8.2%, eGFR 61 mL/min/1.73m², Creatinine 1.1 mg/dL, LDL 118, HDL 42.
+Labs: HbA1c 8.2%, Fasting Plasma Glucose (FPG) 162 mg/dL, OGTT 2-hour glucose 224 mg/dL, eGFR 61 mL/min/1.73m², Creatinine 1.1 mg/dL, LDL 118, HDL 42. Liver function: AST 24 U/L, ALT 31 U/L, ALP 78 U/L, Total Bilirubin 0.9 mg/dL.
 Medications: Metformin 1000mg BID, Sitagliptin 100mg QD, Lisinopril 10mg QD, Atorvastatin 20mg QD, Aspirin 81mg QD.
 PMH: T2DM (12 yrs), Hypertension, Hyperlipidemia, CKD Stage 2. Allergies: NKDA.
 
-A: T2DM suboptimally controlled (HbA1c 8.2%). Hypertension not at goal (BP 142/88). CKD Stage 2 stable.
+A: T2DM suboptimally controlled (HbA1c 8.2%). FPG and OGTT consistent with poorly controlled diabetes. Liver function within normal limits. Hypertension not at goal (BP 142/88). CKD Stage 2 stable.
 
 P: Consider GLP-1 agonist or SGLT2 inhibitor given CKD and CV risk. Increase Lisinopril to 20mg. Refer endocrinology, ophthalmology. Follow up 8 weeks.`;
 
