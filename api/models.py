@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class MatchRequest(BaseModel):
@@ -8,7 +8,14 @@ class MatchRequest(BaseModel):
 class CriterionResult(BaseModel):
     criterion: str
     status: str
-    patient_value: str | None
+    patient_value: str | None = None
+
+    @field_validator('patient_value', mode='before')
+    @classmethod
+    def coerce_to_str(cls, v):
+        if v is None:
+            return None
+        return str(v)
 
 
 class TrialMatch(BaseModel):
