@@ -1,4 +1,5 @@
 import os
+import re
 import anthropic
 from dotenv import load_dotenv
 
@@ -64,7 +65,12 @@ def optimize_note(note: str) -> dict:
         missing = [
             display
             for keyword, display in _FIELDS
-            if keyword not in note_lower and _PLACEHOLDER in optimized
+            if keyword not in note_lower
+            and bool(re.search(
+                re.escape(display) + r"[^.\n]*" + re.escape(_PLACEHOLDER),
+                optimized,
+                re.IGNORECASE,
+            ))
         ]
         return {"optimized_note": optimized, "missing_fields": missing}
     except Exception:

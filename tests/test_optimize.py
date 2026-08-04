@@ -27,6 +27,7 @@ def test_optimize_note_returns_structure():
     assert isinstance(result["missing_fields"], list)
     assert "FPG" in result["missing_fields"]
     assert "OGTT" in result["missing_fields"]
+    assert "HbA1c" not in result["missing_fields"]
 
 
 def test_optimize_note_no_missing_fields():
@@ -34,11 +35,15 @@ def test_optimize_note_no_missing_fields():
         "S: 48M, T2D 4 years.\n\n"
         "O: HbA1c 7.6%, FPG 148 mg/dL, OGTT 2-hour glucose 218 mg/dL, BMI 27.1, "
         "eGFR 91 mL/min, AST 22 U/L, ALT 28 U/L, ALP 74 U/L, Total Bilirubin 0.8 mg/dL. "
-        "Metformin 500mg BID.\n\nA: Near target.\n\nP: Continue."
+        "Metformin 500mg BID. Age: 48. Sex: Male. Insulin: No.\n\nA: Near target.\n\nP: Continue."
     )
     with patch("extraction.optimize._client") as mock_client:
         mock_client.messages.create.return_value = _mock_response(full_note)
-        result = optimize_note("Patient has full labs.")
+        result = optimize_note(
+            "hba1c 7.6%, fasting glucose 148, ogtt 218, bmi 27.1, egfr 91, "
+            "ast 22, alt 28, alp 74, bilirubin 0.8, age 48, sex male, "
+            "diagnosis 4 years, medication metformin, insulin no"
+        )
 
     assert result["missing_fields"] == []
 
