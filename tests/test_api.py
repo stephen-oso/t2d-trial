@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch
 from fastapi.testclient import TestClient
 from api.main import app
 
@@ -45,3 +46,22 @@ def test_match_endpoint():
     data = response.json()
     assert "patient" in data
     assert "matches" in data
+
+
+def test_optimize_endpoint_returns_optimized_note():
+    with patch("api.main.optimize_note") as mock_opt:
+        mock_opt.return_value = {
+            "optimized_note": "S: Patient...\nO: HbA1c 7.6%...",
+            "missing_fields": ["FPG", "OGTT"],
+        }
+        resp = client.post("/optimize", json={"note": "Patient has T2D. HbA1c 7.6%."})
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["optimized_note"] == "S: Patient...\nO: HbA1c 7.6%..."
+    assert data["missing_fields"] == ["FPG", "OGTT"]
+
+
+def test_optimize_endpoint_rejects_short_note():
+    resp = client.post("/optimize", json={"note": "hi"})
+    assert resp.status_code == 422

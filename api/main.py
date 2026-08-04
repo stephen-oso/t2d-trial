@@ -8,9 +8,10 @@ from fastapi.middleware.cors import CORSMiddleware
 logging.basicConfig(level=logging.INFO)
 from api.models import (
     MatchRequest, MatchResponse, TrialSummary,
-    HealthResponse, MetricsResponse
+    HealthResponse, MetricsResponse, OptimizeRequest, OptimizeResponse
 )
 from matching.agent import run_match
+from extraction.optimize import optimize_note
 
 app = FastAPI(title="T2D Trial Pre-Screener", version="1.0.0")
 
@@ -61,6 +62,12 @@ def match(request: MatchRequest):
         _metrics["error_count"] += 1
         logging.exception("run_match failed")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/optimize", response_model=OptimizeResponse)
+def optimize(request: OptimizeRequest):
+    result = optimize_note(request.note)
+    return OptimizeResponse(**result)
 
 
 @app.get("/metrics", response_model=MetricsResponse)

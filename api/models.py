@@ -6,6 +6,15 @@ class MatchRequest(BaseModel):
     location: str | None = Field(default=None, description="Patient location for nearby trial filtering (e.g. Toronto, ON)")
 
 
+class OptimizeRequest(BaseModel):
+    note: str = Field(min_length=10, description="Raw clinical note to optimize")
+
+
+class OptimizeResponse(BaseModel):
+    optimized_note: str
+    missing_fields: list[str]
+
+
 class CriterionResult(BaseModel):
     criterion: str
     status: str
