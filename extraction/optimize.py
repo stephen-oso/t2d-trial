@@ -22,7 +22,7 @@ _FIELDS = [
     ("bilirubin",       "Bilirubin"),
     ("age",             "Age"),
     ("sex",             "Sex"),
-    ("diagnosis",       "Diagnosis Duration"),
+    ("diagnosis",       "Diagnosis"),
     ("medication",      "Medications"),
     ("insulin",         "Insulin Use"),
 ]

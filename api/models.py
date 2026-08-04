@@ -7,7 +7,7 @@ class MatchRequest(BaseModel):
 
 
 class OptimizeRequest(BaseModel):
-    note: str = Field(min_length=10, description="Raw clinical note to optimize")
+    note: str = Field(min_length=10, max_length=20000, description="Raw clinical note to optimize")
 
 
 class OptimizeResponse(BaseModel):

@@ -65,3 +65,8 @@ def test_optimize_endpoint_returns_optimized_note():
 def test_optimize_endpoint_rejects_short_note():
     resp = client.post("/optimize", json={"note": "hi"})
     assert resp.status_code == 422
+
+
+def test_optimize_endpoint_rejects_oversized_note():
+    resp = client.post("/optimize", json={"note": "a" * 20001})
+    assert resp.status_code == 422
