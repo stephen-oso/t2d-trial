@@ -94,6 +94,12 @@ export default function App() {
   });
   const intervalRef = useRef(null);
 
+  const [tab, setTab] = useState('optimize');
+  const [rawNote, setRawNote] = useState('');
+  const [optimizedNote, setOptimizedNote] = useState('');
+  const [missingFields, setMissingFields] = useState([]);
+  const [optimizing, setOptimizing] = useState(false);
+
   function startInterval() {
     setLoadingStep(0);
     intervalRef.current = setInterval(() => {
@@ -144,12 +150,43 @@ export default function App() {
     }
   }
 
+  async function handleOptimize() {
+    setOptimizing(true);
+    setOptimizedNote('');
+    setMissingFields([]);
+    try {
+      const res = await fetch(`${API_URL}/optimize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note: rawNote }),
+      });
+      if (!res.ok) throw new Error(`API error ${res.status}`);
+      const data = await res.json();
+      setOptimizedNote(data.optimized_note);
+      setMissingFields(data.missing_fields);
+    } catch {
+      setOptimizedNote(rawNote);
+      setMissingFields([]);
+    } finally {
+      setOptimizing(false);
+    }
+  }
+
+  function useOptimizedNote() {
+    setNote(optimizedNote);
+    setTab('find');
+  }
+
   function reset() {
     setView('input');
     setNote('');
     setLocation('');
     setResult(null);
     setError(null);
+    setTab('optimize');
+    setRawNote('');
+    setOptimizedNote('');
+    setMissingFields([]);
   }
 
   function restoreFromHistory(entry) {
@@ -201,61 +238,121 @@ export default function App() {
       <main className="app__main">
         {(view === 'input' || view === 'loading') && (
           <div className="input-section">
-            <textarea
-              className="input-section__textarea"
-              value={note}
-              onChange={e => setNote(e.target.value)}
-              placeholder="Paste a SOAP note or patient summary..."
-              disabled={view === 'loading'}
-              rows={10}
-            />
-            {view === 'input' && (
-              <>
-                <input
-                  className="input-section__location"
-                  type="text"
-                  value={location}
-                  onChange={e => setLocation(e.target.value)}
-                  placeholder="Patient location (optional) — e.g. Toronto, ON"
+            <div className="tabs">
+              <button
+                className={`tabs__tab${tab === 'optimize' ? ' tabs__tab--active' : ''}`}
+                onClick={() => setTab('optimize')}
+                disabled={view === 'loading'}
+              >
+                Optimize Note
+              </button>
+              <button
+                className={`tabs__tab${tab === 'find' ? ' tabs__tab--active' : ''}`}
+                onClick={() => setTab('find')}
+                disabled={view === 'loading'}
+              >
+                Find Trials
+              </button>
+            </div>
+
+            {tab === 'optimize' && view === 'input' && (
+              <div className="optimize-tab">
+                <textarea
+                  className="input-section__textarea"
+                  value={rawNote}
+                  onChange={e => setRawNote(e.target.value)}
+                  placeholder="Paste your note here — we'll clean it up and flag any missing clinical values..."
+                  rows={10}
                 />
-                <div className="input-section__footer">
-                  <button
-                    className="input-section__sample-link"
-                    onClick={() => setNote(SAMPLE_NOTE)}
-                  >
-                    Load sample note
-                  </button>
-                  <p className="input-section__hint">Analysis takes ~30 seconds</p>
-                </div>
                 <button
-                  className="btn btn--primary"
-                  onClick={handleSubmit}
-                  disabled={note.trim().length === 0}
+                  className="btn btn--secondary"
+                  onClick={handleOptimize}
+                  disabled={rawNote.trim().length === 0 || optimizing}
                 >
-                  Find Matching Trials
+                  {optimizing ? 'Optimizing...' : 'Optimize Note'}
                 </button>
-              </>
-            )}
-            {view === 'loading' && (
-              <div className="loading">
-                <div className="loading__steps">
-                  {LOADING_STEPS.map((step, i) => (
-                    <div
-                      key={i}
-                      className={`loading__step${
-                        i < loadingStep
-                          ? ' loading__step--done'
-                          : i === loadingStep
-                          ? ' loading__step--active'
-                          : ''
-                      }`}
-                    >
-                      <div className="loading__step-dot" />
-                      <span>{step}</span>
-                    </div>
-                  ))}
-                </div>
+
+                {optimizedNote && (
+                  <>
+                    {missingFields.length > 0 && (
+                      <div className="missing-banner">
+                        <span className="missing-banner__label">Missing:</span>{' '}
+                        {missingFields.join(', ')} — fill in what you have
+                      </div>
+                    )}
+                    <textarea
+                      className="input-section__textarea"
+                      value={optimizedNote}
+                      onChange={e => setOptimizedNote(e.target.value)}
+                      rows={14}
+                    />
+                    <button className="btn btn--primary" onClick={useOptimizedNote}>
+                      Use This Note →
+                    </button>
+                  </>
+                )}
               </div>
+            )}
+
+            {(tab === 'find' || view === 'loading') && (
+              <>
+                <textarea
+                  className="input-section__textarea"
+                  value={note}
+                  onChange={e => setNote(e.target.value)}
+                  placeholder="Paste a SOAP note or patient summary..."
+                  disabled={view === 'loading'}
+                  rows={10}
+                />
+                {view === 'input' && (
+                  <>
+                    <input
+                      className="input-section__location"
+                      type="text"
+                      value={location}
+                      onChange={e => setLocation(e.target.value)}
+                      placeholder="Patient location (optional) — e.g. Toronto, ON"
+                    />
+                    <div className="input-section__footer">
+                      <button
+                        className="input-section__sample-link"
+                        onClick={() => setNote(SAMPLE_NOTE)}
+                      >
+                        Load sample note
+                      </button>
+                      <p className="input-section__hint">Analysis takes ~30 seconds</p>
+                    </div>
+                    <button
+                      className="btn btn--primary"
+                      onClick={handleSubmit}
+                      disabled={note.trim().length === 0}
+                    >
+                      Find Matching Trials
+                    </button>
+                  </>
+                )}
+                {view === 'loading' && (
+                  <div className="loading">
+                    <div className="loading__steps">
+                      {LOADING_STEPS.map((step, i) => (
+                        <div
+                          key={i}
+                          className={`loading__step${
+                            i < loadingStep
+                              ? ' loading__step--done'
+                              : i === loadingStep
+                              ? ' loading__step--active'
+                              : ''
+                          }`}
+                        >
+                          <div className="loading__step-dot" />
+                          <span>{step}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
